@@ -2,7 +2,76 @@ require "augeas"
 require "forwardable"
 
 module ConfigFiles
-  # @note highly coupled with AugeasTree class
+  class AugeasMatcher
+    def initialize(key: nil, collection: nil, :value_matcher: nil)
+      @matcher = lambda do |element|
+        return false if key && element[:key] != key
+        return false if collection && element[:key] != collection + "[]"
+        return false if value_matcher && !(value_matcher === element[:value])
+        return true
+      end
+    end
+
+    def to_proc
+      @matcher
+    end
+  end
+
+  # allows to place element to certain place
+  class AugeasAppendPlacer
+    def new_element(tree)
+      res = {}
+      tree.data << res
+
+      res
+    end
+  end
+
+  class AugeasBeforePlacer
+    def initialize(matcher)
+      @matcher = matcher
+    end
+
+    def new_element(tree)
+      index = tree.data.index(&matcher)
+      raise "Augeas element not found" unless index
+
+      res = {}
+      tree.data.insert(index, res)
+      res
+    end
+  end
+
+  class AugeasAfterPlacer
+    def initialize(matcher)
+      @matcher = matcher
+    end
+
+    def new_element(tree)
+      index = tree.data.index(&matcher)
+      raise "Augeas element not found" unless index
+
+      res = {}
+      tree.data.insert(index + 1, res)
+      res
+    end
+  end
+
+  class AugeasReplacePlacer
+    def initialize(matcher)
+      @matcher = matcher
+    end
+
+    def new_element(tree)
+      index = tree.data.index(&matcher)
+      raise "Augeas element not found" unless index
+
+      res = {}
+      tree.data[index] = res
+      res
+    end
+  end
+
   class AugeasCollection
     extend Forwardable
     def initialize(tree, name)
@@ -13,12 +82,14 @@ module ConfigFiles
 
     def_delegators :@collection, :[], :empty?, :each, :map, :any?, :all?, :none?
 
-    def add(value, where = { :append => true})
-      # TODO
+    def add(value, placer = AugeasAppendPlacer.new)
+      element = placer.new_element
+      element[:key] = augeas_name
+      element[:value] = value
     end
 
     def delete(matcher)
-      key = @name + "[]"
+      key = augeas_name
       @tree.data.reject! do |entry|
         entry[:key] == key && matcher === entry[:value]
       end
@@ -28,8 +99,12 @@ module ConfigFiles
 
   private
      def load_collection
-      entries = @tree.data.select{|d| d[:key] == @name + "[]"}
+      entries = @tree.data.select{|d| d[:key] == augeas_name}
       @collection = entries.map{|e| e[:value]}.freeze
+     end
+
+     def augeas_name
+       @name + "[]"
      end
   end
 
@@ -50,15 +125,10 @@ module ConfigFiles
       @data.reject! { |entry| entry[:key] == key }
     end
 
-    # possible where:
-    #   append: true # append to the end of parser file
-    #   before_key: "key" # add before entry with given key
-    #   after_key:  "key" # add after entry with given key
-    #   before_collection_entry: { name: "my_collection", matcher: /entry 5/ }
-    #   after_collection_entry: { name: "my_collection", matcher: /entry 5/ }
-    #     adds before/after entry matching (===) matcher in given collection
-    def add(key, value, where = { append: true })
-      raise "not yet implemented"
+    def add(key, value, placer = AugeasAppendPlacer.new)
+      element = placer.new_element
+      element[:key] = key
+      element[:value] = value
     end
 
     def [](key)
