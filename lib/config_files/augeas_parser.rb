@@ -3,7 +3,7 @@ require "forwardable"
 
 module ConfigFiles
   class AugeasMatcher
-    def initialize(key: nil, collection: nil, :value_matcher: nil)
+    def initialize(key: nil, collection: nil, value_matcher: nil)
       @matcher = lambda do |element|
         return false if key && element[:key] != key
         return false if collection && element[:key] != collection + "[]"
@@ -33,7 +33,7 @@ module ConfigFiles
     end
 
     def new_element(tree)
-      index = tree.data.index(&matcher)
+      index = tree.data.index(&@matcher)
       raise "Augeas element not found" unless index
 
       res = {}
@@ -48,7 +48,7 @@ module ConfigFiles
     end
 
     def new_element(tree)
-      index = tree.data.index(&matcher)
+      index = tree.data.index(&@matcher)
       raise "Augeas element not found" unless index
 
       res = {}
@@ -63,7 +63,7 @@ module ConfigFiles
     end
 
     def new_element(tree)
-      index = tree.data.index(&matcher)
+      index = tree.data.index(&@matcher)
       raise "Augeas element not found" unless index
 
       res = {}
@@ -83,7 +83,7 @@ module ConfigFiles
     def_delegators :@collection, :[], :empty?, :each, :map, :any?, :all?, :none?
 
     def add(value, placer = AugeasAppendPlacer.new)
-      element = placer.new_element
+      element = placer.new_element(@tree)
       element[:key] = augeas_name
       element[:value] = value
     end
@@ -126,7 +126,7 @@ module ConfigFiles
     end
 
     def add(key, value, placer = AugeasAppendPlacer.new)
-      element = placer.new_element
+      element = placer.new_element(self)
       element[:key] = key
       element[:value] = value
     end
