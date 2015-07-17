@@ -5,8 +5,8 @@ module ConfigFiles
   # @note highly coupled with AugeasTree class
   class AugeasCollection
     extend Forwardable
-    def initialize(data, name)
-      @data = data
+    def initialize(tree, name)
+      @tree = tree
       @name = name
       load_collection
     end
@@ -19,7 +19,7 @@ module ConfigFiles
 
     def delete(matcher)
       key = @name + "[]"
-      @data.reject! do |entry|
+      @tree.data.reject! do |entry|
         entry[:key] == key && matcher === entry[:value]
       end
 
@@ -28,19 +28,22 @@ module ConfigFiles
 
   private
      def load_collection
-      entries = @data.select{|d| d[:key] == @name + "[]"}
+      entries = @tree.data.select{|d| d[:key] == @name + "[]"}
       @collection = entries.map{|e| e[:value]}.freeze
      end
   end
 
   # Represent parsed augeas config tree with user friendly methods
   class AugeasTree
+    # low level access to augeas structure
+    attr_reader :data
+
     def initialize
       @data = []
     end
 
     def collection(key)
-      AugeasCollection.new(@data, key)
+      AugeasCollection.new(self, key)
     end
 
     def delete(key)
