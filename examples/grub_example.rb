@@ -10,10 +10,10 @@ config.load
 
 puts"config: " + config.inspect
 puts ""
-puts "os prober:  #{config.os_prober_enabled?}"
+puts "os prober:  #{config.os_prober.enabled?}"
 
 
-config.disable_os_prober
+config.os_prober.disable
 config.enable_recovery_entry "\"kernel_do_your_job=HARD!\""
 
 config.save
