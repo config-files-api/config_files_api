@@ -3,7 +3,7 @@ rvm:
   - 2.2.3
   - 2.1.7
 before_install:
-  - sudo apt-get install --no-install-recommends augeas-devel
+  - sudo apt-get install --no-install-recommends libaugeas-dev pkg-config
 install: gem install rubocop rspec ruby-augeas
 script:
     - rake spec
