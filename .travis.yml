@@ -2,7 +2,7 @@ language: ruby
 rvm:
   - 2.2.x
   - 2.1.x
-install: gem install rubocop rspec
+install: gem install rubocop rspec ruby-augeas
 script:
     - rake spec
     - rubocop
