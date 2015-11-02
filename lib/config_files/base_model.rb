@@ -1,7 +1,9 @@
 module ConfigFiles
   # A base class for models. Represents a configuration file as an object
-  # with domain-specific attributes/methods. For persistent storage, use load and save,
-  # Non-responsibilities: actual storage and parsing (both delegated). There is no caching involved.
+  # with domain-specific attributes/methods. For persistent storage,
+  # use load and save,
+  # Non-responsibilities: actual storage and parsing (both delegated).
+  # There is no caching involved.
   class BaseModel
     def initialize(parser, file_path, file_class: File)
       @file_class = file_class
@@ -25,7 +27,7 @@ module ConfigFiles
     def merge_changes
       new_data = data.dup
       read
-      # TODO recursive merge
+      # TODO: recursive merge
       data.merge(new_data)
     end
   end

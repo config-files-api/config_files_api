@@ -1,4 +1,4 @@
-$: << File.expand_path("../../lib", __FILE__)
+$LOAD_PATH << File.expand_path("../../lib", __FILE__)
 
 require "config_files/grub2/default"
 require "config_files/memory_file"
@@ -8,10 +8,9 @@ memory_file = ConfigFiles::MemoryFile.new(File.read(grub_path))
 config = ConfigFiles::Grub2::Default.new(file_class: memory_file)
 config.load
 
-puts"config: " + config.inspect
+puts "config: " + config.inspect
 puts ""
 puts "os prober:  #{config.os_prober.enabled?}"
-
 
 config.os_prober.disable
 config.enable_recovery_entry "\"kernel_do_your_job=HARD!\""
