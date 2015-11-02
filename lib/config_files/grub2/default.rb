@@ -1,20 +1,20 @@
 require "config_files/base_model"
 require "config_files/augeas_parser"
 
-module ConfigFiles
+module ConfigFiles::Grub2
   # Represents grub configuration in /etc/default/grub
   # Main features:
   # - Do not overwrite files
   # - When setting value first try to just change value if key already exists
   # - When key is not set, then try to find commented out line with key and replace it with real config
   # - When even commented out code is not there, then append configuration to the end of file
-  class GrubModel < BaseModel
-    PARSER = AugeasParser.new("sysconfig.lns")
+  class Default < ConfigFiles::BaseModel
+    PARSER = ConfigFiles::AugeasParser.new("sysconfig.lns")
     PATH = "/etc/default/grub"
 
     def initialize(file_class: File)
       super(PARSER, PATH, file_class: file_class)
-      self.data = AugeasTree.new
+      self.data = ConfigFiles::AugeasTree.new
     end
 
     def os_prober
@@ -92,9 +92,9 @@ module ConfigFiles
         return
       end
       # Try to find if it is commented out, so we can replace line
-      matcher = AugeasMatcher.new(collection: "#comment", value_matcher: /#{key}\s*=/)
+      matcher = ConfigFiles::AugeasMatcher.new(collection: "#comment", value_matcher: /#{key}\s*=/)
       if data.data.any?(&matcher)
-        data.add(key, value, AugeasReplacePlacer.new(matcher))
+        data.add(key, value, ConfigFiles::AugeasReplacePlacer.new(matcher))
         return
       end
 
