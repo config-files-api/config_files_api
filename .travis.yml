@@ -5,8 +5,8 @@ rvm:
 addons:
   apt:
     packages:
-      libaugeas-dev
-      pkg-config
+      - libaugeas-dev
+      - pkg-config
 # use new travis infrastructure
 sudo: false
 install: gem install rubocop rspec ruby-augeas
