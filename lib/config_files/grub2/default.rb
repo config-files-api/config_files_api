@@ -16,8 +16,8 @@ module ConfigFiles
       PARSER = AugeasParser.new("sysconfig.lns")
       PATH = "/etc/default/grub"
 
-      def initialize(file_class: File)
-        super(PARSER, PATH, file_class: file_class)
+      def initialize(file_handler: File)
+        super(PARSER, PATH, file_handler: file_handler)
         self.data = AugeasTree.new
       end
 

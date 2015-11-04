@@ -6,7 +6,7 @@ describe ConfigFiles::Grub2::Default do
   let(:boolean_value_class) { ConfigFiles::Grub2::Default::BooleanValue }
   let(:memory_file) { ConfigFiles::MemoryFile.new(file_content) }
   let(:config) do
-    res = ConfigFiles::Grub2::Default.new(file_class: memory_file)
+    res = ConfigFiles::Grub2::Default.new(file_handler: memory_file)
     res.load
     res
   end
