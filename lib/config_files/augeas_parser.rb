@@ -191,7 +191,7 @@ module ConfigFiles
       end
     end
 
-    def select(&matcher)
+    def select(matcher)
       @data.select(&matcher)
     end
 
