@@ -12,7 +12,9 @@ describe ConfigFiles::AugeasParser do
 
     it "raises exception if augeas failed during parsing" do
       example_file = "invalid syntax\n"
-      expect{subject.parse(example_file)}.to raise_error(/Augeas parsing error/)
+
+      msg = /Augeas parsing\/serializing error/
+      expect { subject.parse(example_file) }.to raise_error(msg)
     end
   end
 
@@ -26,7 +28,9 @@ describe ConfigFiles::AugeasParser do
     it "raises exception if passed tree cannot be converted by augeas lens" do
       example_tree = ConfigFiles::AugeasTree.new
       example_tree["invalid"] = "test"
-      expect{subject.serialize(example_tree)}.to raise_error(/Augeas serializing error/)
+
+      msg = /Augeas parsing\/serializing error/
+      expect { subject.serialize(example_tree) }.to raise_error(msg)
     end
   end
 end
@@ -63,7 +67,7 @@ describe ConfigFiles::AugeasTree do
       expect(subtree["user"]).to eq "ALL"
     end
 
-    it "return first element in collection if collection name with '[]' is passed" do
+    it "return first element in collection for collection name with '[]'" do
       expect(tree["#comment[]"]).to eq "# sudoers file."
     end
 
@@ -96,7 +100,7 @@ describe ConfigFiles::AugeasCollection do
   describe "#delete" do
     it "removes from collection all elements matching parameter" do
       collection.delete(/visudo/)
-      expect(collection.none?{|e| e =~ /visudo/ }).to eq true
+      expect(collection.none? { |e| e =~ /visudo/ }).to eq true
     end
   end
 end
