@@ -83,7 +83,6 @@ describe ConfigFiles::Grub2::Default do
     end
   end
 
-
   describe "#generic_set" do
     context "value is already specified in file" do
       let(:file_content) { "GRUB_ENABLE_CRYPTODISK=false\n" }

@@ -214,16 +214,15 @@ module ConfigFiles
         #   params.parameter("console") # => ["S0", "S1"]
         #
         def parameter(key)
-          values = @tree.data.select{ |e| e[:key] == key }.map{ |e| e[:value] }
-          if values.empty?
-            false
-          elsif values.size > 1
-            values
-          elsif values.first == true
-            true
-          else
-            values.first
-          end
+          values = @tree.data
+            .select { |e| e[:key] == key }
+            .map { |e| e[:value] }
+
+          return false if values.empty?
+          return values if values.size > 1
+          return true if values.first == true
+
+          values.first
         end
 
         # Adds new parameter to kernel command line. Uses augeas placers.
@@ -241,13 +240,18 @@ module ConfigFiles
           @tree.data.reject!(&matcher)
         end
 
-        # TODO replace it via augeas parser when someone write lense
+        # Represents parsed kernel parameters tree. Parses in initialization
+        # and backserilized by `to_string`.
+        # TODO: replace it via augeas parser when someone write lense
         class ParamTree
           attr_reader :data
 
           def initialize(line)
             line ||= ""
-            pairs = line.split(/\s/).reject(&:empty?).map {|e| e.split("=", 2)}
+            pairs = line.split(/\s/)
+              .reject(&:empty?)
+              .map { |e| e.split("=", 2) }
+
             @data = pairs.map do |k, v|
               {
                 key:   k,
