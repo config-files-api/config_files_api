@@ -57,23 +57,23 @@ describe ConfigFiles::Grub2::Default do
       expect(params.parameter("console")).to eq ["S0", "S1"]
 
       # lets place verbose after parameter "quite"
-      matcher = ConfigFiles::AugeasMatcher.new(key: "quite")
-      placer = ConfigFiles::AugeasAfterPlacer.new(matcher)
+      matcher = ConfigFiles::Matcher.new(key: "quite")
+      placer = ConfigFiles::AfterPlacer.new(matcher)
       params.add_parameter("verbose", true, placer)
 
       # lets place silent at the end
       params.add_parameter("silent", true)
 
       # lets change second console parameter from S1 to S2
-      matcher = ConfigFiles::AugeasMatcher.new(
+      matcher = ConfigFiles::Matcher.new(
         key:           "console",
         value_matcher: "S1"
       )
-      placer = ConfigFiles::AugeasReplacePlacer.new(matcher)
+      placer = ConfigFiles::ReplacePlacer.new(matcher)
       params.add_parameter("console", "S2", placer)
 
       # lets remove VGA parameter
-      matcher = ConfigFiles::AugeasMatcher.new(key: "vga")
+      matcher = ConfigFiles::Matcher.new(key: "vga")
       params.remove_parameter(matcher)
 
       config.save

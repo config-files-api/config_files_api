@@ -1,5 +1,7 @@
 require "config_files/base_model"
 require "config_files/augeas_parser"
+require "config_files/placer"
+require "config_files/matcher"
 
 module ConfigFiles
   module Grub2
@@ -124,13 +126,13 @@ module ConfigFiles
 
       def uncomment(key, value)
         # Try to find if it is commented out, so we can replace line
-        matcher = AugeasMatcher.new(
+        matcher = Matcher.new(
           collection:    "#comment",
           value_matcher: /#{key}\s*=/
         )
         return false unless  data.data.any?(&matcher)
 
-        data.add(key, value, AugeasReplacePlacer.new(matcher))
+        data.add(key, value, ReplacePlacer.new(matcher))
         true
       end
 
@@ -225,8 +227,8 @@ module ConfigFiles
         end
 
         # Adds new parameter to kernel command line. Uses augeas placers.
-        # To replace value use {AugeasReplacePlacer}
-        def add_parameter(key, value, placer = AugeasAppendPlacer.new)
+        # To replace value use {ReplacePlacer}
+        def add_parameter(key, value, placer = AppendPlacer.new)
           element = placer.new_element(@tree)
 
           element[:key]   = key
@@ -234,7 +236,7 @@ module ConfigFiles
         end
 
         # Removes parameter from kernel command line.
-        # @param matcher [AugeasMatcher] to find entry to remove
+        # @param matcher [Matcher] to find entry to remove
         def remove_parameter(matcher)
           @tree.data.reject!(&matcher)
         end
