@@ -1,110 +1,8 @@
 require "augeas"
 require "forwardable"
+require "config_files/placer"
 
 module ConfigFiles
-  # Class used to create matcher, that allows to find specific option in augeas
-  # tree or subtree
-  # TODO: examples of usage
-  class AugeasMatcher
-    def initialize(key: nil, collection: nil, value_matcher: nil)
-      @matcher = lambda do |element|
-        return false unless key_match?(element, key)
-        return false unless collection_match?(element, collection)
-        return false unless value_match?(element, value_matcher)
-        return true
-      end
-    end
-
-    def to_proc
-      @matcher
-    end
-
-    def key_match?(element, key)
-      return true unless key
-
-      element[:key] == key
-    end
-
-    def collection_match?(element, collection)
-      return true unless collection
-
-      element[:key] == (collection + "[]")
-    end
-
-    def value_match?(element, matcher)
-      case matcher
-      when nil then true
-      when Regexp
-        return false unless element[:value].is_a?(String)
-        matcher =~ element[:value]
-      else
-        matcher == element[:value]
-      end
-    end
-  end
-
-  # allows to place element at the end of configuration. Default one.
-  class AugeasAppendPlacer
-    def new_element(tree)
-      res = {}
-      tree.data << res
-
-      res
-    end
-  end
-
-  # Specialized placer, that allows to place config value before found one.
-  # Useful, when config option should be inserted to specific location.
-  class AugeasBeforePlacer
-    def initialize(matcher)
-      @matcher = matcher
-    end
-
-    def new_element(tree)
-      index = tree.data.index(&@matcher)
-      raise "Augeas element not found" unless index
-
-      res = {}
-      tree.data.insert(index, res)
-      res
-    end
-  end
-
-  # Specialized placer, that allows to place config value after found one.
-  # Useful, when config option should be inserted to specific location.
-  class AugeasAfterPlacer
-    def initialize(matcher)
-      @matcher = matcher
-    end
-
-    def new_element(tree)
-      index = tree.data.index(&@matcher)
-      raise "Augeas element not found" unless index
-
-      res = {}
-      tree.data.insert(index + 1, res)
-      res
-    end
-  end
-
-  # Specialized placer, that allows to place config value instead of found one.
-  # Useful, when value already exists and detected by matcher. Then easy add
-  # with this placer replace it carefully to correct location.
-  class AugeasReplacePlacer
-    def initialize(matcher)
-      @matcher = matcher
-    end
-
-    def new_element(tree)
-      index = tree.data.index(&@matcher)
-      raise "Augeas element not found" unless index
-
-      res = {}
-      tree.data[index] = res
-      res
-    end
-  end
-
   # Represents list of same config options in augeas.
   # For example comments are often stored in collections.
   class AugeasCollection
@@ -117,7 +15,7 @@ module ConfigFiles
 
     def_delegators :@collection, :[], :empty?, :each, :map, :any?, :all?, :none?
 
-    def add(value, placer = AugeasAppendPlacer.new)
+    def add(value, placer = AppendPlacer.new)
       element = placer.new_element(@tree)
       element[:key] = augeas_name
       element[:value] = value
@@ -166,7 +64,7 @@ module ConfigFiles
       @data.reject! { |entry| entry[:key] == key }
     end
 
-    def add(key, value, placer = AugeasAppendPlacer.new)
+    def add(key, value, placer = AppendPlacer.new)
       element = placer.new_element(self)
       element[:key] = key
       element[:value] = value
@@ -191,7 +89,7 @@ module ConfigFiles
       end
     end
 
-    def select(&matcher)
+    def select(matcher)
       @data.select(&matcher)
     end
 

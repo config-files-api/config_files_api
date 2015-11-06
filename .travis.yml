@@ -7,8 +7,9 @@ addons:
     packages:
       - libaugeas-dev
       - pkg-config
-# use new travis infrastructure
-sudo: false
+# use trusty travis infrastructure
+sudo: required
+dist: trusty
 install: gem install rubocop rspec ruby-augeas
 script:
     - rake spec

@@ -41,6 +41,48 @@ describe ConfigFiles::Grub2::Default do
     end
   end
 
+  describe "#kernel_params" do
+    let(:file_content) do
+      "GRUB_CMDLINE_LINUX_DEFAULT=\"quite console=S0 console=S1 vga=0x400\"\n"
+    end
+
+    it "returns KernelParams object" do
+      kernel_params_class = ConfigFiles::Grub2::Default::KernelParams
+      expect(config.kernel_params).to be_a(kernel_params_class)
+
+      params = config.kernel_params
+      expect(params.parameter("quite")).to eq true
+      expect(params.parameter("verbose")).to eq false
+      expect(params.parameter("vga")).to eq "0x400"
+      expect(params.parameter("console")).to eq ["S0", "S1"]
+
+      # lets place verbose after parameter "quite"
+      matcher = ConfigFiles::Matcher.new(key: "quite")
+      placer = ConfigFiles::AfterPlacer.new(matcher)
+      params.add_parameter("verbose", true, placer)
+
+      # lets place silent at the end
+      params.add_parameter("silent", true)
+
+      # lets change second console parameter from S1 to S2
+      matcher = ConfigFiles::Matcher.new(
+        key:           "console",
+        value_matcher: "S1"
+      )
+      placer = ConfigFiles::ReplacePlacer.new(matcher)
+      params.add_parameter("console", "S2", placer)
+
+      # lets remove VGA parameter
+      matcher = ConfigFiles::Matcher.new(key: "vga")
+      params.remove_parameter(matcher)
+
+      config.save
+      expected_line = "GRUB_CMDLINE_LINUX_DEFAULT=" \
+        "\"quite verbose console=S0 console=S2 silent\"\n"
+      expect(memory_file.content).to eq(expected_line)
+    end
+  end
+
   describe "#generic_set" do
     context "value is already specified in file" do
       let(:file_content) { "GRUB_ENABLE_CRYPTODISK=false\n" }

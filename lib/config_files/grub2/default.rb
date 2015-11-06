@@ -1,5 +1,7 @@
 require "config_files/base_model"
 require "config_files/augeas_parser"
+require "config_files/placer"
+require "config_files/matcher"
 
 module ConfigFiles
   module Grub2
@@ -21,6 +23,15 @@ module ConfigFiles
         self.data = AugeasTree.new
       end
 
+      def save(changes_only: false)
+        # serialize kernel params object before save
+        if @kernel_params
+          generic_set("GRUB_CMDLINE_LINUX_DEFAULT", @kernel_params.serialize)
+        end
+
+        super
+      end
+
       def os_prober
         @os_prober ||= BooleanValue.new(
           "GRUB_DISABLE_OS_PROBER",
@@ -30,6 +41,10 @@ module ConfigFiles
           true_value:  "false",
           false_value: "true"
         )
+      end
+
+      def kernel_params
+        @kernel_params ||= KernelParams.new(data["GRUB_CMDLINE_LINUX_DEFAULT"])
       end
 
       def disable_recovery_entry
@@ -111,13 +126,13 @@ module ConfigFiles
 
       def uncomment(key, value)
         # Try to find if it is commented out, so we can replace line
-        matcher = AugeasMatcher.new(
+        matcher = Matcher.new(
           collection:    "#comment",
           value_matcher: /#{key}\s*=/
         )
         return false unless  data.data.any?(&matcher)
 
-        data.add(key, value, AugeasReplacePlacer.new(matcher))
+        data.add(key, value, ReplacePlacer.new(matcher))
         true
       end
 
@@ -169,6 +184,93 @@ module ConfigFiles
 
         def data
           @model.generic_get(@name)
+        end
+      end
+
+      # Represents kernel append line with helpers to easier modification.
+      # TODO: handle quoting, maybe have own lense to parse/serialize kernel
+      #       params?
+      class KernelParams
+        def initialize(line)
+          @tree = ParamTree.new(line)
+        end
+
+        def serialize
+          @tree.to_string
+        end
+
+        # gets value for parameters.
+        # @return possible values are `false` when parameter missing,
+        #   `true` when parameter without value placed, string if single
+        #   instance with value is there and array if multiple instance with
+        #   values are there.
+        #
+        # @example different values
+        #   line = "quite console=S0 console=S1 vga=0x400"
+        #   params = KernelParams.new(line)
+        #   params.parameter("quite") # => true
+        #   params.parameter("verbose") # => false
+        #   params.parameter("vga") # => "0x400"
+        #   params.parameter("console") # => ["S0", "S1"]
+        #
+        def parameter(key)
+          values = @tree.data
+            .select { |e| e[:key] == key }
+            .map { |e| e[:value] }
+
+          return false if values.empty?
+          return values if values.size > 1
+          return true if values.first == true
+
+          values.first
+        end
+
+        # Adds new parameter to kernel command line. Uses augeas placers.
+        # To replace value use {ReplacePlacer}
+        def add_parameter(key, value, placer = AppendPlacer.new)
+          element = placer.new_element(@tree)
+
+          element[:key]   = key
+          element[:value] = value
+        end
+
+        # Removes parameter from kernel command line.
+        # @param matcher [Matcher] to find entry to remove
+        def remove_parameter(matcher)
+          @tree.data.reject!(&matcher)
+        end
+
+        # Represents parsed kernel parameters tree. Parses in initialization
+        # and backserilized by `to_string`.
+        # TODO: replace it via augeas parser when someone write lense
+        class ParamTree
+          attr_reader :data
+
+          def initialize(line)
+            line ||= ""
+            pairs = line.split(/\s/)
+              .reject(&:empty?)
+              .map { |e| e.split("=", 2) }
+
+            @data = pairs.map do |k, v|
+              {
+                key:   k,
+                value: v || true, # kernel param without value have true
+              }
+            end
+          end
+
+          def to_string
+            snippets = @data.map do |e|
+              if e[:value] == true
+                e[:key]
+              else
+                "#{e[:key]}=#{e[:value]}"
+              end
+            end
+
+            snippets.join(" ")
+          end
         end
       end
     end
