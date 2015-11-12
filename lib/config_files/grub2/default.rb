@@ -35,9 +35,8 @@ module ConfigFiles
       def load
         super
 
-        if data["GRUB_CMDLINE_LINUX_DEFAULT"]
-          kernel_params.replace(data["GRUB_CMDLINE_LINUX_DEFAULT"])
-        end
+        param_line = data["GRUB_CMDLINE_LINUX_DEFAULT"]
+        kernel_params.replace(param_line) if param_line
       end
 
       def os_prober
@@ -80,14 +79,10 @@ module ConfigFiles
 
       def terminal
         case data["GRUB_TERMINAL"]
-        when "", nil
-          nil
-        when "console"
-          :console
-        when "serial"
-          :serial
-        when "gfxterm"
-          :gfxterm
+        when "", nil   then nil
+        when "console" then :console
+        when "serial"  then :serial
+        when "gfxterm" then :gfxterm
         else
           raise "unknown GRUB_TERMINAL option #{data["GRUB_TERMINAL"].inspect}"
         end
@@ -181,7 +176,7 @@ module ConfigFiles
         end
 
         def defined?
-          return !data.nil?
+          !data.nil?
         end
 
         # sets boolean value, recommend to use for generic boolean setter.
