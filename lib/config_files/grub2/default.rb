@@ -36,7 +36,6 @@ module ConfigFiles
         @os_prober ||= BooleanValue.new(
           "GRUB_DISABLE_OS_PROBER",
           self,
-          default:     true,
           # grub key is disable, so use reverse logic
           true_value:  "false",
           false_value: "true"
@@ -57,7 +56,7 @@ module ConfigFiles
       end
 
       def timeout
-        data["GRUB_TIMEOUT"] || 10
+        data["GRUB_TIMEOUT"]
       end
 
       def timeout=(value)
@@ -73,7 +72,9 @@ module ConfigFiles
 
       def terminal
         case data["GRUB_TERMINAL"]
-        when "console", "", nil
+        when "", nil
+          nil
+        when "console"
           :console
         when "serial"
           :serial
@@ -144,12 +145,9 @@ module ConfigFiles
       # Allows easy switching and questioning for boolean value, even if
       # represented by text in config file
       class BooleanValue
-        def initialize(name, model, default: false,
-                        true_value: "true", false_value: "false"
-                      )
+        def initialize(name, model, true_value: "true", false_value: "false")
           @name = name
           @model = model
-          @default = default
           @true_value = true_value
           @false_value = false_value
         end
@@ -163,15 +161,19 @@ module ConfigFiles
         end
 
         def enabled?
-          return @default unless data
+          return nil unless data
 
           data == @true_value
         end
 
         def disabled?
-          return @default unless data
+          return nil unless data
 
           data != @true_value
+        end
+
+        def defined?
+          return !data.nil?
         end
 
         # sets boolean value, recommend to use for generic boolean setter.
