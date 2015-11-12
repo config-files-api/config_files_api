@@ -32,6 +32,14 @@ module ConfigFiles
         super
       end
 
+      def load
+        super
+
+        if data["GRUB_CMDLINE_LINUX_DEFAULT"]
+          kernel_params.replace(data["GRUB_CMDLINE_LINUX_DEFAULT"])
+        end
+      end
+
       def os_prober
         @os_prober ||= BooleanValue.new(
           "GRUB_DISABLE_OS_PROBER",
@@ -199,6 +207,11 @@ module ConfigFiles
 
         def serialize
           @tree.to_string
+        end
+
+        # replaces kernel params with passed line
+        def replace(line)
+          @tree = ParamTree.new(line)
         end
 
         # gets value for parameters.
