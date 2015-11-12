@@ -209,6 +209,11 @@ module ConfigFiles
           @tree = ParamTree.new(line)
         end
 
+        # checks if there is any parameter
+        def empty?
+          serialize.empty?
+        end
+
         # gets value for parameters.
         # @return possible values are `false` when parameter missing,
         #   `true` when parameter without value placed, string if single
