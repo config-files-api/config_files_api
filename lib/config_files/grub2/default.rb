@@ -34,7 +34,7 @@ module ConfigFiles
         # serialize kernel params object before save
         kernels = [@kernel_params, @xen_hypervisor_params, @xen_kernel_params]
         kernels.each do |params|
-          # FIXME: this empty blocks writing explicit empty kernel. Is it useful?
+          # FIXME: this empty prevent writing explicit empty kernel params.
           generic_set(params.key, params.serialize) if params && !params.empty?
         end
 
