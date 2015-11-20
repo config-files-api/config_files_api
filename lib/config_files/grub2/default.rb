@@ -15,6 +15,28 @@ module ConfigFiles
     # - When even commented out code is not there, then append configuration
     #   to the end of file
     class Default < BaseModel
+      # TODO: move it to generic place together with generic set and get
+      def self.attributes(attrs)
+        attrs.each_pair do |key, value|
+          define_method(key) do
+            generic_get[value]
+          end
+
+          define_method(:"#{key.to_s}=") do |target|
+            generic_set(value, target)
+          end
+        end
+      end
+
+      attributes(
+        timeout:     "GRUB_TIMEOUT",
+        distributor: "GRUB_DISTRIBUTOR",
+        gfxmode:     "GRUB_GFXMODE",
+        theme:       "GRUB_THEME"
+      )
+
+      # powerfull low level method that sets any value in grub config.
+
       PARSER = AugeasParser.new("sysconfig.lns")
       PATH = "/etc/default/grub"
 
@@ -25,8 +47,10 @@ module ConfigFiles
 
       def save(changes_only: false)
         # serialize kernel params object before save
-        if @kernel_params
-          generic_set("GRUB_CMDLINE_LINUX_DEFAULT", @kernel_params.serialize)
+        kernels = [@kernel_params, @xen_hypervisor_params, @xen_kernel_params]
+        kernels.each do |params|
+          # FIXME this empty blocks writing explicit empty kernel. Is it useful?
+          generic_set(params.key, params.serialize) if params && !params.empty?
         end
 
         super
@@ -35,8 +59,11 @@ module ConfigFiles
       def load
         super
 
-        param_line = data["GRUB_CMDLINE_LINUX_DEFAULT"]
-        kernel_params.replace(param_line) if param_line
+        kernels = [kernel_params, xen_hypervisor_params, xen_kernel_params]
+        kernels.each do |kernel|
+          param_line = data[kernel.key]
+          kernel.replace(param_line) if param_line
+        end
       end
 
       def os_prober
@@ -50,7 +77,24 @@ module ConfigFiles
       end
 
       def kernel_params
-        @kernel_params ||= KernelParams.new(data["GRUB_CMDLINE_LINUX_DEFAULT"])
+        @kernel_params ||= KernelParams.new(
+          data["GRUB_CMDLINE_LINUX_DEFAULT"],
+          "GRUB_CMDLINE_LINUX_DEFAULT"
+        )
+      end
+
+      def xen_hypervisor_params
+        @xen_hypervisor_params ||= KernelParams.new(
+          data["GRUB_CMDLINE_LINUX_XEN_REPLACE_DEFAULT"],
+          "GRUB_CMDLINE_LINUX_XEN_REPLACE_DEFAULT"
+        )
+      end
+
+      def xen_kernel_params
+        @xen_kernel_params ||= KernelParams.new(
+          data["GRUB_CMDLINE_LINUX_XEN"],
+          "GRUB_CMDLINE_LINUX_XEN"
+        )
       end
 
       def disable_recovery_entry
@@ -60,14 +104,6 @@ module ConfigFiles
       def enable_recovery_entry(kernel_params)
         generic_set("GRUB_DISABLE_RECOVERY", "false")
         generic_set("GRUB_CMDLINE_LINUX_RECOVERY", kernel_params)
-      end
-
-      def timeout
-        data["GRUB_TIMEOUT"]
-      end
-
-      def timeout=(value)
-        generic_set("GRUB_TIMEOUT", value)
       end
 
       def cryptodisk
@@ -106,14 +142,15 @@ module ConfigFiles
         data["GRUB_SERIAL_COMMAND"]
       end
 
-      # powerfull low level method that sets any value in grub config.
       # @note prefer to use specialized methods
+      # TODO: move it to generic place
       def generic_set(key, value)
         modify(key, value) || uncomment(key, value) || add_new(key, value)
       end
 
       # powerfull method that gets unformatted any value in grub config.
       # @note prefer to use specialized methods
+      # TODO: move it to generic place
       def generic_get(key)
         data[key]
       end
@@ -196,8 +233,11 @@ module ConfigFiles
       # TODO: handle quoting, maybe have own lense to parse/serialize kernel
       #       params?
       class KernelParams
-        def initialize(line)
+        attr_reader :key
+
+        def initialize(line, key)
           @tree = ParamTree.new(line)
+          @key = key
         end
 
         def serialize
