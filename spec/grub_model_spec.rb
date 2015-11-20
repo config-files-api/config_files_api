@@ -3,12 +3,28 @@ require "config_files/grub2/default"
 require "config_files/memory_file"
 
 describe ConfigFiles::Grub2::Default do
-  let(:boolean_value_class) { ConfigFiles::Grub2::Default::BooleanValue }
+  let(:boolean_value_class) { ConfigFiles::BooleanValue }
   let(:memory_file) { ConfigFiles::MemoryFile.new(file_content) }
   let(:config) do
     res = ConfigFiles::Grub2::Default.new(file_handler: memory_file)
     res.load
     res
+  end
+
+  describe "#timeout" do
+    context "key is specified" do
+      let(:file_content) { "GRUB_TIMEOUT=10\n" }
+      it "returns value of GRUB_TIMEOUT key" do
+        expect(config.timeout).to eq "10"
+      end
+    end
+
+    context "key is missing in file" do
+      let(:file_content) { "\n" }
+      it "returns nil" do
+        expect(config.timeout).to eq nil
+      end
+    end
   end
 
   describe "#os_prober" do

@@ -15,27 +15,12 @@ module ConfigFiles
     # - When even commented out code is not there, then append configuration
     #   to the end of file
     class Default < BaseModel
-      # TODO: move it to generic place together with generic set and get
-      def self.attributes(attrs)
-        attrs.each_pair do |key, value|
-          define_method(key) do
-            generic_get[value]
-          end
-
-          define_method(:"#{key.to_s}=") do |target|
-            generic_set(value, target)
-          end
-        end
-      end
-
       attributes(
         timeout:     "GRUB_TIMEOUT",
         distributor: "GRUB_DISTRIBUTOR",
         gfxmode:     "GRUB_GFXMODE",
         theme:       "GRUB_THEME"
       )
-
-      # powerfull low level method that sets any value in grub config.
 
       PARSER = AugeasParser.new("sysconfig.lns")
       PATH = "/etc/default/grub"
@@ -49,7 +34,7 @@ module ConfigFiles
         # serialize kernel params object before save
         kernels = [@kernel_params, @xen_hypervisor_params, @xen_kernel_params]
         kernels.each do |params|
-          # FIXME this empty blocks writing explicit empty kernel. Is it useful?
+          # FIXME: this empty blocks writing explicit empty kernel. Is it useful?
           generic_set(params.key, params.serialize) if params && !params.empty?
         end
 
@@ -140,93 +125,6 @@ module ConfigFiles
 
       def serial_console
         data["GRUB_SERIAL_COMMAND"]
-      end
-
-      # @note prefer to use specialized methods
-      # TODO: move it to generic place
-      def generic_set(key, value)
-        modify(key, value) || uncomment(key, value) || add_new(key, value)
-      end
-
-      # powerfull method that gets unformatted any value in grub config.
-      # @note prefer to use specialized methods
-      # TODO: move it to generic place
-      def generic_get(key)
-        data[key]
-      end
-
-    private
-
-      def modify(key, value)
-        # if already set, just change value
-        return false unless data[key]
-
-        data[key] = value
-        true
-      end
-
-      def uncomment(key, value)
-        # Try to find if it is commented out, so we can replace line
-        matcher = Matcher.new(
-          collection:    "#comment",
-          value_matcher: /#{key}\s*=/
-        )
-        return false unless  data.data.any?(&matcher)
-
-        data.add(key, value, ReplacePlacer.new(matcher))
-        true
-      end
-
-      def add_new(key, value)
-        data.add(key, value)
-      end
-
-      # Representing boolean value switcher in default grub configuration file.
-      # Allows easy switching and questioning for boolean value, even if
-      # represented by text in config file
-      class BooleanValue
-        def initialize(name, model, true_value: "true", false_value: "false")
-          @name = name
-          @model = model
-          @true_value = true_value
-          @false_value = false_value
-        end
-
-        def enable
-          @model.generic_set(@name, @true_value)
-        end
-
-        def disable
-          @model.generic_set(@name, @false_value)
-        end
-
-        def enabled?
-          return nil unless data
-
-          data == @true_value
-        end
-
-        def disabled?
-          return nil unless data
-
-          data != @true_value
-        end
-
-        def defined?
-          !data.nil?
-        end
-
-        # sets boolean value, recommend to use for generic boolean setter.
-        # for constants prefer to use enable/disable
-        def value=(value)
-          @model.generic_set(@name, value ? @true_value : @false_value)
-        end
-
-      private
-
-        def data
-          @model.generic_get(@name)
-        end
       end
 
       # Represents kernel append line with helpers to easier modification.
