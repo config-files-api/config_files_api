@@ -15,6 +15,13 @@ module ConfigFiles
     # - When even commented out code is not there, then append configuration
     #   to the end of file
     class Default < BaseModel
+      attributes(
+        timeout:     "GRUB_TIMEOUT",
+        distributor: "GRUB_DISTRIBUTOR",
+        gfxmode:     "GRUB_GFXMODE",
+        theme:       "GRUB_THEME"
+      )
+
       PARSER = AugeasParser.new("sysconfig.lns")
       PATH = "/etc/default/grub"
 
@@ -25,18 +32,29 @@ module ConfigFiles
 
       def save(changes_only: false)
         # serialize kernel params object before save
-        if @kernel_params
-          generic_set("GRUB_CMDLINE_LINUX_DEFAULT", @kernel_params.serialize)
+        kernels = [@kernel_params, @xen_hypervisor_params, @xen_kernel_params]
+        kernels.each do |params|
+          # FIXME: this empty prevent writing explicit empty kernel params.
+          generic_set(params.key, params.serialize) if params && !params.empty?
         end
 
         super
+      end
+
+      def load
+        super
+
+        kernels = [kernel_params, xen_hypervisor_params, xen_kernel_params]
+        kernels.each do |kernel|
+          param_line = data[kernel.key]
+          kernel.replace(param_line) if param_line
+        end
       end
 
       def os_prober
         @os_prober ||= BooleanValue.new(
           "GRUB_DISABLE_OS_PROBER",
           self,
-          default:     true,
           # grub key is disable, so use reverse logic
           true_value:  "false",
           false_value: "true"
@@ -44,7 +62,24 @@ module ConfigFiles
       end
 
       def kernel_params
-        @kernel_params ||= KernelParams.new(data["GRUB_CMDLINE_LINUX_DEFAULT"])
+        @kernel_params ||= KernelParams.new(
+          data["GRUB_CMDLINE_LINUX_DEFAULT"],
+          "GRUB_CMDLINE_LINUX_DEFAULT"
+        )
+      end
+
+      def xen_hypervisor_params
+        @xen_hypervisor_params ||= KernelParams.new(
+          data["GRUB_CMDLINE_LINUX_XEN_REPLACE_DEFAULT"],
+          "GRUB_CMDLINE_LINUX_XEN_REPLACE_DEFAULT"
+        )
+      end
+
+      def xen_kernel_params
+        @xen_kernel_params ||= KernelParams.new(
+          data["GRUB_CMDLINE_LINUX_XEN"],
+          "GRUB_CMDLINE_LINUX_XEN"
+        )
       end
 
       def disable_recovery_entry
@@ -56,14 +91,6 @@ module ConfigFiles
         generic_set("GRUB_CMDLINE_LINUX_RECOVERY", kernel_params)
       end
 
-      def timeout
-        data["GRUB_TIMEOUT"] || 10
-      end
-
-      def timeout=(value)
-        generic_set("GRUB_TIMEOUT", value)
-      end
-
       def cryptodisk
         @cryptodisk ||= BooleanValue.new(
           "GRUB_ENABLE_CRYPTODISK",
@@ -73,12 +100,10 @@ module ConfigFiles
 
       def terminal
         case data["GRUB_TERMINAL"]
-        when "console", "", nil
-          :console
-        when "serial"
-          :serial
-        when "gfxterm"
-          :gfxterm
+        when "", nil   then nil
+        when "console" then :console
+        when "serial"  then :serial
+        when "gfxterm" then :gfxterm
         else
           raise "unknown GRUB_TERMINAL option #{data["GRUB_TERMINAL"].inspect}"
         end
@@ -102,101 +127,29 @@ module ConfigFiles
         data["GRUB_SERIAL_COMMAND"]
       end
 
-      # powerfull low level method that sets any value in grub config.
-      # @note prefer to use specialized methods
-      def generic_set(key, value)
-        modify(key, value) || uncomment(key, value) || add_new(key, value)
-      end
-
-      # powerfull method that gets unformatted any value in grub config.
-      # @note prefer to use specialized methods
-      def generic_get(key)
-        data[key]
-      end
-
-    private
-
-      def modify(key, value)
-        # if already set, just change value
-        return false unless data[key]
-
-        data[key] = value
-        true
-      end
-
-      def uncomment(key, value)
-        # Try to find if it is commented out, so we can replace line
-        matcher = Matcher.new(
-          collection:    "#comment",
-          value_matcher: /#{key}\s*=/
-        )
-        return false unless  data.data.any?(&matcher)
-
-        data.add(key, value, ReplacePlacer.new(matcher))
-        true
-      end
-
-      def add_new(key, value)
-        data.add(key, value)
-      end
-
-      # Representing boolean value switcher in default grub configuration file.
-      # Allows easy switching and questioning for boolean value, even if
-      # represented by text in config file
-      class BooleanValue
-        def initialize(name, model, default: false,
-                        true_value: "true", false_value: "false"
-                      )
-          @name = name
-          @model = model
-          @default = default
-          @true_value = true_value
-          @false_value = false_value
-        end
-
-        def enable
-          @model.generic_set(@name, @true_value)
-        end
-
-        def disable
-          @model.generic_set(@name, @false_value)
-        end
-
-        def enabled?
-          return @default unless data
-
-          data == @true_value
-        end
-
-        def disabled?
-          return @default unless data
-
-          data != @true_value
-        end
-
-        # sets boolean value, recommend to use for generic boolean setter.
-        # for constants prefer to use enable/disable
-        def value=(value)
-          @model.generic_set(@name, value ? @true_value : @false_value)
-        end
-
-      private
-
-        def data
-          @model.generic_get(@name)
-        end
-      end
-
       # Represents kernel append line with helpers to easier modification.
       # TODO: handle quoting, maybe have own lense to parse/serialize kernel
       #       params?
       class KernelParams
-        def initialize(line)
+        attr_reader :key
+
+        def initialize(line, key)
           @tree = ParamTree.new(line)
+          @key = key
         end
 
         def serialize
           @tree.to_string
+        end
+
+        # replaces kernel params with passed line
+        def replace(line)
+          @tree = ParamTree.new(line)
+        end
+
+        # checks if there is any parameter
+        def empty?
+          serialize.empty?
         end
 
         # gets value for parameters.
