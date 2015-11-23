@@ -30,7 +30,7 @@ module ConfigFiles
       @loaded = true
     end
 
-    # powerfull method that sets any value in grub config. It try to be
+    # powerfull method that sets any value in config. It try to be
     # smart to at first modify existing value, then replace commented out code
     # and if even that doesn't work, then append it at the end
     # @note prefer to use specialized methods of children
@@ -38,7 +38,7 @@ module ConfigFiles
       modify(key, value) || uncomment(key, value) || add_new(key, value)
     end
 
-    # powerfull method that gets unformatted any value in grub config.
+    # powerfull method that gets unformatted any value in config.
     # @note prefer to use specialized methods of children
     def generic_get(key)
       data[key]
@@ -46,7 +46,7 @@ module ConfigFiles
 
   protected
 
-    # TODO: move it to generic place together with generic set and get
+    # generates accessors for trivial key-value attributes
     def self.attributes(attrs)
       attrs.each_pair do |key, value|
         define_method(key) do
@@ -82,7 +82,7 @@ module ConfigFiles
       # Try to find if it is commented out, so we can replace line
       matcher = Matcher.new(
         collection:    "#comment",
-        value_matcher: /#{key}\s*=/
+        value_matcher: /(\s|^)#{key}\s*=/
       )
       return false unless  data.data.any?(&matcher)
 
