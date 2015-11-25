@@ -53,18 +53,15 @@ module ConfigFiles
 
       def os_prober
         @os_prober ||= BooleanValue.new(
-          "GRUB_DISABLE_OS_PROBER",
-          self,
+          "GRUB_DISABLE_OS_PROBER", self,
           # grub key is disable, so use reverse logic
-          true_value:  "false",
-          false_value: "true"
+          true_value:  "false", false_value: "true"
         )
       end
 
       def kernel_params
         @kernel_params ||= KernelParams.new(
-          data["GRUB_CMDLINE_LINUX_DEFAULT"],
-          "GRUB_CMDLINE_LINUX_DEFAULT"
+          data["GRUB_CMDLINE_LINUX_DEFAULT"], "GRUB_CMDLINE_LINUX_DEFAULT"
         )
       end
 
@@ -77,8 +74,21 @@ module ConfigFiles
 
       def xen_kernel_params
         @xen_kernel_params ||= KernelParams.new(
-          data["GRUB_CMDLINE_LINUX_XEN"],
-          "GRUB_CMDLINE_LINUX_XEN"
+          data["GRUB_CMDLINE_LINUX_XEN"], "GRUB_CMDLINE_LINUX_XEN"
+        )
+      end
+
+      def recovery_params
+        @recovery_params ||= KernelParams.new(
+          data["GRUB_CMDLINE_LINUX_RECOVERY"], "GRUB_CMDLINE_LINUX_RECOVERY"
+        )
+      end
+
+      def recovery_entry
+        @recovery ||= BooleanValue.new(
+          "GRUB_DISABLE_RECOVERY", self,
+          # grub key is disable, so use reverse logic
+          true_value:  "false", false_value: "true"
         )
       end
 
@@ -92,10 +102,7 @@ module ConfigFiles
       end
 
       def cryptodisk
-        @cryptodisk ||= BooleanValue.new(
-          "GRUB_ENABLE_CRYPTODISK",
-          self
-        )
+        @cryptodisk ||= BooleanValue.new("GRUB_ENABLE_CRYPTODISK", self)
       end
 
       def terminal
