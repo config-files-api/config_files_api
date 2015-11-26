@@ -44,10 +44,9 @@ module ConfigFiles
       data[key]
     end
 
-    # Returns if cnfiguration was already loaded
-    def loaded?
-      @loaded
-    end
+    # Returns if configuration was already loaded
+    attr_reader :loaded
+    alias_method :loaded?, :loaded
 
   protected
 
