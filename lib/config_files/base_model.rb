@@ -44,6 +44,11 @@ module ConfigFiles
       data[key]
     end
 
+    # Returns if cnfiguration was already loaded
+    def loaded?
+      @loaded
+    end
+
   protected
 
     # generates accessors for trivial key-value attributes
@@ -61,7 +66,6 @@ module ConfigFiles
     private_class_method :attributes
 
     attr_accessor :data
-    attr_accessor :loaded
 
     def merge_changes
       new_data = data.dup
