@@ -92,15 +92,6 @@ module ConfigFiles
         )
       end
 
-      def disable_recovery_entry
-        generic_set("GRUB_DISABLE_RECOVERY", "true")
-      end
-
-      def enable_recovery_entry(kernel_params)
-        generic_set("GRUB_DISABLE_RECOVERY", "false")
-        generic_set("GRUB_CMDLINE_LINUX_RECOVERY", kernel_params)
-      end
-
       def cryptodisk
         @cryptodisk ||= BooleanValue.new("GRUB_ENABLE_CRYPTODISK", self)
       end

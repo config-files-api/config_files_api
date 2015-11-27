@@ -1,5 +1,7 @@
 Config Files Gem
 ================
+[![Code Climate](https://codeclimate.com/github/jreidinger/config_files/badges/gpa.svg)](https://codeclimate.com/github/jreidinger/config_files)
+[![Coverage Status](https://coveralls.io/repos/jreidinger/config_files/badge.svg?branch=master&service=github)](https://coveralls.io/github/jreidinger/config_files?branch=master)
 Idea of gem is to have user friendly component based way to access and modify
 configuration files. There is basically three layers.
 
