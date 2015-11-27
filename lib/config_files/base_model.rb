@@ -44,9 +44,11 @@ module ConfigFiles
       data[key]
     end
 
+    # rubocop:disable Style/TrivialAccessors
     # Returns if configuration was already loaded
-    attr_reader :loaded
-    alias_method :loaded?, :loaded
+    def loaded?
+      @loaded
+    end
 
   protected
 

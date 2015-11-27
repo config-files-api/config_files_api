@@ -32,7 +32,8 @@ module ConfigFiles
 
       def save(changes_only: false)
         # serialize kernel params object before save
-        kernels = [@kernel_params, @xen_hypervisor_params, @xen_kernel_params]
+        kernels = [@kernel_params, @xen_hypervisor_params, @xen_kernel_params,
+                   @recovery_params]
         kernels.each do |params|
           # FIXME: this empty prevent writing explicit empty kernel params.
           generic_set(params.key, params.serialize) if params && !params.empty?
@@ -44,7 +45,8 @@ module ConfigFiles
       def load
         super
 
-        kernels = [kernel_params, xen_hypervisor_params, xen_kernel_params]
+        kernels = [kernel_params, xen_hypervisor_params, xen_kernel_params,
+                   recovery_params]
         kernels.each do |kernel|
           param_line = data[kernel.key]
           kernel.replace(param_line) if param_line
@@ -55,7 +57,7 @@ module ConfigFiles
         @os_prober ||= BooleanValue.new(
           "GRUB_DISABLE_OS_PROBER", self,
           # grub key is disable, so use reverse logic
-          true_value:  "false", false_value: "true"
+          true_value: "false", false_value: "true"
         )
       end
 
@@ -88,7 +90,7 @@ module ConfigFiles
         @recovery ||= BooleanValue.new(
           "GRUB_DISABLE_RECOVERY", self,
           # grub key is disable, so use reverse logic
-          true_value:  "false", false_value: "true"
+          true_value: "false", false_value: "true"
         )
       end
 
