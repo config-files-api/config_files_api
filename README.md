@@ -1,5 +1,5 @@
-Config Files Gem
-================
+Config Files Api Gem
+=====================
 Idea of gem is to have user friendly component based way to access and modify
 configuration files. There is basically three layers.
 
@@ -13,4 +13,5 @@ ruby library or CVS via cvs specialized library.
 
 The third layer is model of file that allows more highlevel actions and its main
 purpose is to ensure consistency of file and providing high level API for
-file manipulation.
+file manipulation. The models live in their own gems as plugin built on top of
+this gem.

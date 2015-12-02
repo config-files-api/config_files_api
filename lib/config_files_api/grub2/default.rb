@@ -1,9 +1,9 @@
-require "config_files/base_model"
-require "config_files/augeas_parser"
-require "config_files/placer"
-require "config_files/matcher"
+require "config_files_api/base_model"
+require "config_files_api/augeas_parser"
+require "config_files_api/placer"
+require "config_files_api/matcher"
 
-module ConfigFiles
+module ConfigFilesApi
   module Grub2
     # Represents grub configuration in /etc/default/grub
     # Main features:

@@ -1,11 +1,11 @@
 $LOAD_PATH << File.expand_path("../../lib", __FILE__)
 
-require "config_files/grub2/default"
-require "config_files/memory_file"
+require "config_files_api/grub2/default"
+require "config_files_api/memory_file"
 
 grub_path = File.expand_path("../data/grub.cfg", __FILE__)
-memory_file = ConfigFiles::MemoryFile.new(File.read(grub_path))
-config = ConfigFiles::Grub2::Default.new(file_handler: memory_file)
+memory_file = ConfigFilesApi::MemoryFile.new(File.read(grub_path))
+config = ConfigFilesApi::Grub2::Default.new(file_handler: memory_file)
 config.load
 
 puts "config: " + config.inspect

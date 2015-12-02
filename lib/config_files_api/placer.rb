@@ -1,4 +1,4 @@
-module ConfigFiles
+module ConfigFilesApi
   # allows to place element at the end of configuration. Default one.
   class AppendPlacer
     def new_element(tree)

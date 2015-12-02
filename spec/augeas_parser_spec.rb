@@ -1,13 +1,13 @@
 require_relative "spec_helper"
-require "config_files/augeas_parser"
+require "config_files_api/augeas_parser"
 
-describe ConfigFiles::AugeasParser do
+describe ConfigFilesApi::AugeasParser do
   subject { described_class.new("sudoers.lns") }
 
   describe "#parse" do
     it "parses given string and returns AugeasTree instance" do
       example_file = "root ALL=(ALL) ALL\n"
-      expect(subject.parse(example_file)).to be_a(ConfigFiles::AugeasTree)
+      expect(subject.parse(example_file)).to be_a(ConfigFilesApi::AugeasTree)
     end
 
     it "raises exception if augeas failed during parsing" do
@@ -20,13 +20,13 @@ describe ConfigFiles::AugeasParser do
 
   describe "#serialize" do
     it "creates text file from passed AugeasTree" do
-      example_tree = ConfigFiles::AugeasTree.new
+      example_tree = ConfigFilesApi::AugeasTree.new
       example_tree["#comment[]"] = "test comment"
       expect(subject.serialize(example_tree)).to eq "# test comment\n"
     end
 
     it "raises exception if passed tree cannot be converted by augeas lens" do
-      example_tree = ConfigFiles::AugeasTree.new
+      example_tree = ConfigFilesApi::AugeasTree.new
       example_tree["invalid"] = "test"
 
       msg = /Augeas parsing\/serializing error/
@@ -35,15 +35,15 @@ describe ConfigFiles::AugeasParser do
   end
 end
 
-describe ConfigFiles::AugeasTree do
+describe ConfigFilesApi::AugeasTree do
   subject(:tree) do
-    parser = ConfigFiles::AugeasParser.new("sudoers.lns")
+    parser = ConfigFilesApi::AugeasParser.new("sudoers.lns")
     parser.parse(load_data("sudoers"))
   end
 
   describe "#collection" do
     it "returns AugeasCollection instace for given key" do
-      expect(tree.collection("#comment")).to be_a(ConfigFiles::AugeasCollection)
+      expect(tree.collection("#comment")).to be_a(ConfigFilesApi::AugeasCollection)
     end
   end
 
@@ -90,9 +90,9 @@ describe ConfigFiles::AugeasTree do
   end
 end
 
-describe ConfigFiles::AugeasCollection do
+describe ConfigFilesApi::AugeasCollection do
   subject(:collection) do
-    parser = ConfigFiles::AugeasParser.new("sudoers.lns")
+    parser = ConfigFilesApi::AugeasParser.new("sudoers.lns")
     tree = parser.parse(load_data("sudoers"))
     tree.collection("#comment")
   end
