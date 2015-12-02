@@ -43,7 +43,9 @@ describe ConfigFilesApi::AugeasTree do
 
   describe "#collection" do
     it "returns AugeasCollection instace for given key" do
-      expect(tree.collection("#comment")).to be_a(ConfigFilesApi::AugeasCollection)
+      expect(tree.collection("#comment")).to(
+        be_a(ConfigFilesApi::AugeasCollection)
+      )
     end
   end
 
