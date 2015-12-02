@@ -1,12 +1,12 @@
 require_relative "spec_helper"
-require "config_files/grub2/default"
-require "config_files/memory_file"
+require "config_files_api/grub2/default"
+require "config_files_api/memory_file"
 
-describe ConfigFiles::Grub2::Default do
-  let(:boolean_value_class) { ConfigFiles::BooleanValue }
-  let(:memory_file) { ConfigFiles::MemoryFile.new(file_content) }
+describe ConfigFilesApi::Grub2::Default do
+  let(:boolean_value_class) { ConfigFilesApi::BooleanValue }
+  let(:memory_file) { ConfigFilesApi::MemoryFile.new(file_content) }
   let(:config) do
-    res = ConfigFiles::Grub2::Default.new(file_handler: memory_file)
+    res = ConfigFilesApi::Grub2::Default.new(file_handler: memory_file)
     res.load
     res
   end
@@ -63,7 +63,7 @@ describe ConfigFiles::Grub2::Default do
     end
 
     it "returns KernelParams object" do
-      kernel_params_class = ConfigFiles::Grub2::Default::KernelParams
+      kernel_params_class = ConfigFilesApi::Grub2::Default::KernelParams
       expect(config.kernel_params).to be_a(kernel_params_class)
 
       params = config.kernel_params
@@ -73,23 +73,23 @@ describe ConfigFiles::Grub2::Default do
       expect(params.parameter("console")).to eq ["S0", "S1"]
 
       # lets place verbose after parameter "quite"
-      matcher = ConfigFiles::Matcher.new(key: "quite")
-      placer = ConfigFiles::AfterPlacer.new(matcher)
+      matcher = ConfigFilesApi::Matcher.new(key: "quite")
+      placer = ConfigFilesApi::AfterPlacer.new(matcher)
       params.add_parameter("verbose", true, placer)
 
       # lets place silent at the end
       params.add_parameter("silent", true)
 
       # lets change second console parameter from S1 to S2
-      matcher = ConfigFiles::Matcher.new(
+      matcher = ConfigFilesApi::Matcher.new(
         key:           "console",
         value_matcher: "S1"
       )
-      placer = ConfigFiles::ReplacePlacer.new(matcher)
+      placer = ConfigFilesApi::ReplacePlacer.new(matcher)
       params.add_parameter("console", "S2", placer)
 
       # lets remove VGA parameter
-      matcher = ConfigFiles::Matcher.new(key: "vga")
+      matcher = ConfigFilesApi::Matcher.new(key: "vga")
       params.remove_parameter(matcher)
 
       config.save

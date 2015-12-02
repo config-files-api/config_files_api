@@ -1,4 +1,4 @@
-module ConfigFiles
+module ConfigFilesApi
   # A base class for models. Represents a configuration file as an object
   # with domain-specific attributes/methods. For persistent storage,
   # use load and save,
@@ -8,11 +8,11 @@ module ConfigFiles
     # @param parser [.parse, .serialize] parser that can convert object to
     #   string and vice versa. It have to provide methods
     #   `string #serialize(object)` and `object #parse(string)`.
-    #   For example see {ConfigFiles::AugeasParser}
+    #   For example see {ConfigFilesApi::AugeasParser}
     # @param file_path [String] expected path passed to file_handler
     # @param file_handler [.read, .write] object, that can read/write string.
     #   It have to provide methods `string read(string)` and
-    #   `write(string, string)`. For example see {ConfigFiles::MemoryFile}
+    #   `write(string, string)`. For example see {ConfigFilesApi::MemoryFile}
     def initialize(parser, file_path, file_handler: File)
       @file_handler = file_handler
       @parser = parser

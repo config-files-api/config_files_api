@@ -1,8 +1,8 @@
 require "augeas"
 require "forwardable"
-require "config_files/placer"
+require "config_files_api/placer"
 
-module ConfigFiles
+module ConfigFilesApi
   # Represents list of same config options in augeas.
   # For example comments are often stored in collections.
   class AugeasCollection
@@ -175,7 +175,7 @@ module ConfigFiles
   # @example read, print, modify and serialize again
   #    require "config_files/augeas_parser"
   #
-  #    parser = ConfigFiles::AugeasParser.new("sysconfig.lns")
+  #    parser = ConfigFilesApi::AugeasParser.new("sysconfig.lns")
   #    data = parser.parse(File.read("/etc/default/grub"))
   #
   #    puts data["GRUB_DISABLE_OS_PROBER"]
