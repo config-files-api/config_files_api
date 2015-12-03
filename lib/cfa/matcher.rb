@@ -1,4 +1,4 @@
-module ConfigFilesApi
+module CFA
   # Class used to create matcher, that allows to find specific option in augeas
   # tree or subtree
   # TODO: examples of usage

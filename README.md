@@ -1,4 +1,4 @@
-Config Files Api Gem
+CFA - Config Files Api Gem
 =====================
 [![Code Climate](https://codeclimate.com/github/config-files-api/config_files_api/badges/gpa.svg)](https://codeclimate.com/github/config-files-api/config_files_api)
 [![Coverage Status](https://coveralls.io/repos/config-files-api/config_files_api/badge.svg?branch=master&service=github)](https://coveralls.io/github/config-files-api/config_files_api?branch=master)
