@@ -1,13 +1,13 @@
 require_relative "spec_helper"
-require "config_files_api/augeas_parser"
+require "cfa/augeas_parser"
 
-describe ConfigFilesApi::AugeasParser do
+describe CFA::AugeasParser do
   subject { described_class.new("sudoers.lns") }
 
   describe "#parse" do
     it "parses given string and returns AugeasTree instance" do
       example_file = "root ALL=(ALL) ALL\n"
-      expect(subject.parse(example_file)).to be_a(ConfigFilesApi::AugeasTree)
+      expect(subject.parse(example_file)).to be_a(CFA::AugeasTree)
     end
 
     it "raises exception if augeas failed during parsing" do
@@ -20,13 +20,13 @@ describe ConfigFilesApi::AugeasParser do
 
   describe "#serialize" do
     it "creates text file from passed AugeasTree" do
-      example_tree = ConfigFilesApi::AugeasTree.new
+      example_tree = CFA::AugeasTree.new
       example_tree["#comment[]"] = "test comment"
       expect(subject.serialize(example_tree)).to eq "# test comment\n"
     end
 
     it "raises exception if passed tree cannot be converted by augeas lens" do
-      example_tree = ConfigFilesApi::AugeasTree.new
+      example_tree = CFA::AugeasTree.new
       example_tree["invalid"] = "test"
 
       msg = /Augeas parsing\/serializing error/
@@ -35,16 +35,16 @@ describe ConfigFilesApi::AugeasParser do
   end
 end
 
-describe ConfigFilesApi::AugeasTree do
+describe CFA::AugeasTree do
   subject(:tree) do
-    parser = ConfigFilesApi::AugeasParser.new("sudoers.lns")
+    parser = CFA::AugeasParser.new("sudoers.lns")
     parser.parse(load_data("sudoers"))
   end
 
   describe "#collection" do
     it "returns AugeasCollection instace for given key" do
       expect(tree.collection("#comment")).to(
-        be_a(ConfigFilesApi::AugeasCollection)
+        be_a(CFA::AugeasCollection)
       )
     end
   end
@@ -92,9 +92,9 @@ describe ConfigFilesApi::AugeasTree do
   end
 end
 
-describe ConfigFilesApi::AugeasCollection do
+describe CFA::AugeasCollection do
   subject(:collection) do
-    parser = ConfigFilesApi::AugeasParser.new("sudoers.lns")
+    parser = CFA::AugeasParser.new("sudoers.lns")
     tree = parser.parse(load_data("sudoers"))
     tree.collection("#comment")
   end
