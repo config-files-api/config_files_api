@@ -6,7 +6,8 @@ Gem::Specification.new do |s|
   s.email       = ["jreidinger@suse.cz"]
   s.homepage    = "http://github.com/config-files-api/config_files_api"
   s.license     = "LGPLv3"
-  s.summary     = "CFA (Config Files API) provides easy way to create model on top of configuration file"
+  s.summary     = "CFA (Config Files API) provides easy way to create models on" \
+    " top of configuration file"
   s.description = "Library offering separation of parsing and file access from"\
     " the rest of the logic for managing configuraton files."\
     " It has built-in support for parsing using augeas lenses and also for"\
