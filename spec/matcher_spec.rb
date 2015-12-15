@@ -7,7 +7,7 @@ describe CFA::Matcher do
       { key: "A", value: "valA" },
       { key: "keyA", value: "A" },
       { key: "A[]", value: "first" },
-      { key: "A[]", value: "second" },
+      { key: "A[]", value: "second" }
     ]
   end
 
@@ -23,7 +23,7 @@ describe CFA::Matcher do
       matcher = described_class.new(collection: "A")
       matched = test_data.select(&matcher)
       expect(matched.size).to eq 2
-      expect(matched.map{ |v| v[:value]}).to eq ["first", "second"]
+      expect(matched.map { |v| v[:value] }).to eq ["first", "second"]
     end
 
     it "can be constructed with value_matcher specified as string" do
@@ -51,7 +51,7 @@ describe CFA::Matcher do
       matcher = described_class.new(collection: "A", value_matcher: "first")
       matched = test_data.select(&matcher)
       expect(matched.size).to eq 1
-      expect(matched.map{ |v| v[:value]}).to eq ["first"]
+      expect(matched.map { |v| v[:value] }).to eq ["first"]
     end
   end
 end
