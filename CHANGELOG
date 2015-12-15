@@ -1,0 +1,13 @@
+-------------------------------------------------------------------
+Tue Dec 15 14:59:17 UTC 2015 - jreidinger@suse.com
+
+- add empty method requirement for parsers
+- allow using block for matcher
+- 0.2.0
+
+-------------------------------------------------------------------
+Tue Dec 15 14:58:55 UTC 2015 - jreidinger@suse.com
+
+- initial version of package
+- 0.1.0
+
