@@ -218,6 +218,11 @@ module CFA
       end
     end
 
+    # Returns empty tree that can be filled for future serialization
+    def empty
+      AugeasTree.new
+    end
+
   private
 
     def report_error(aug)

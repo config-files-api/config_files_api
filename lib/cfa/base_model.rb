@@ -5,9 +5,9 @@ module CFA
   # Non-responsibilities: actual storage and parsing (both delegated).
   # There is no caching involved.
   class BaseModel
-    # @param parser [.parse, .serialize] parser that can convert object to
-    #   string and vice versa. It have to provide methods
-    #   `string #serialize(object)` and `object #parse(string)`.
+    # @param parser [.parse, .serialize, .empty] parser that can convert object
+    #   to string and vice versa. It have to provide methods
+    #   `string #serialize(object)`, `object #parse(string)` and `object #empty`
     #   For example see {CFA::AugeasParser}
     # @param file_path [String] expected path passed to file_handler
     # @param file_handler [.read, .write] object, that can read/write string.
@@ -18,6 +18,7 @@ module CFA
       @parser = parser
       @file_path = file_path
       @loaded = false
+      self.data = parser.empty
     end
 
     def save(changes_only: false)

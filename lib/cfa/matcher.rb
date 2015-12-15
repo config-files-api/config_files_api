@@ -3,11 +3,13 @@ module CFA
   # tree or subtree
   # TODO: examples of usage
   class Matcher
-    def initialize(key: nil, collection: nil, value_matcher: nil)
+    # @block_yield matcher based on block. block gets two params, key and value
+    def initialize(key: nil, collection: nil, value_matcher: nil, &block)
       @matcher = lambda do |element|
         return false unless key_match?(element, key)
         return false unless collection_match?(element, collection)
         return false unless value_match?(element, value_matcher)
+        return false unless !block || block.call(element[:key], element[:value])
         return true
       end
     end
