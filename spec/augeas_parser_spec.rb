@@ -33,6 +33,12 @@ describe CFA::AugeasParser do
       expect { subject.serialize(example_tree) }.to raise_error(msg)
     end
   end
+
+  describe "#empty" do
+    it "creates new empty AugeasTree" do
+      expect(subject.empty).to be_a CFA::AugeasTree
+    end
+  end
 end
 
 describe CFA::AugeasTree do
