@@ -6,7 +6,7 @@ require "cfa/memory_file"
 describe CFA::BaseModel do
   let(:parser) { CFA::AugeasParser.new("sudoers.lns") }
   let(:path) { "/etc/sudoers" }
-  subject { CFA::BaseModel.new(parser, path)}
+  subject { CFA::BaseModel.new(parser, path) }
 
   describe ".default_file_handler" do
     it "returns object set by .default_file_handler" do
