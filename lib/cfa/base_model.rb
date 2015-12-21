@@ -10,10 +10,10 @@ module CFA
     #   `string #serialize(object)`, `object #parse(string)` and `object #empty`
     #   For example see {CFA::AugeasParser}
     # @param file_path [String] expected path passed to file_handler
-    # @param file_handler [.read, .write] object, that can read/write string.
-    #   It have to provide methods `string read(string)` and
-    #   `write(string, string)`. For example see {CFA::MemoryFile}. When nil
-    #   passed it use object from default_file_handler.
+    # @param file_handler [.read, .write] an object able to read/write a string.
+    #   It has to provide methods `string read(string)` and
+    #   `write(string, string)`. For an example see {CFA::MemoryFile}.
+    #   If unspecified or `nil`, {.default_file_handler} is asked.
     def initialize(parser, file_path, file_handler: nil)
       @file_handler = file_handler || BaseModel.default_file_handler
       @parser = parser
