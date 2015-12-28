@@ -10,11 +10,12 @@ module CFA
     #   `string #serialize(object)`, `object #parse(string)` and `object #empty`
     #   For example see {CFA::AugeasParser}
     # @param file_path [String] expected path passed to file_handler
-    # @param file_handler [.read, .write] object, that can read/write string.
-    #   It have to provide methods `string read(string)` and
-    #   `write(string, string)`. For example see {CFA::MemoryFile}
-    def initialize(parser, file_path, file_handler: File)
-      @file_handler = file_handler
+    # @param file_handler [.read, .write] an object able to read/write a string.
+    #   It has to provide methods `string read(string)` and
+    #   `write(string, string)`. For an example see {CFA::MemoryFile}.
+    #   If unspecified or `nil`, {.default_file_handler} is asked.
+    def initialize(parser, file_path, file_handler: nil)
+      @file_handler = file_handler || BaseModel.default_file_handler
       @parser = parser
       @file_path = file_path
       @loaded = false
@@ -49,6 +50,19 @@ module CFA
     # Returns if configuration was already loaded
     def loaded?
       @loaded
+    end
+
+    # Gets default file handler used when nil passed as file_handler in
+    # constructor
+    def self.default_file_handler
+      @default_file_handler ||= File
+    end
+
+    # Sets default file handler. Useful when needed to change default like if
+    # whole program use non standard file reading.
+    # @param value for value specification see constructor
+    def self.default_file_handler=(value)
+      @default_file_handler = value
     end
 
   protected
