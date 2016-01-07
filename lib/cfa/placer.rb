@@ -1,6 +1,20 @@
 module CFA
-  # allows to place element at the end of configuration. Default one.
-  class AppendPlacer
+  # Places a new {AugeasElement} into an {AugeasTree}.
+  # Children of this abstract class implement different ways **where**
+  # to place the entry.
+  class Placer
+    # @param  [AugeasTree] tree
+    # @return [AugeasElement,Hash] the new element; it is empty!
+    #   Note that the return value is actually a Hash; {AugeasElement}
+    #   documents its structure.
+    def new_element(tree)
+      abstract_method(tree)
+    end
+  end
+
+  # Places the new element at the end of the tree.
+  # Other classes use this Placer by default.
+  class AppendPlacer < Placer
     def new_element(tree)
       res = {}
       tree.data << res
@@ -9,10 +23,13 @@ module CFA
     end
   end
 
-  # Specialized placer, that allows to place config value before found one.
-  # If noone is found, then append to the end
-  # Useful, when config option should be inserted to specific location.
-  class BeforePlacer
+  # Finds a specific element using a {Matcher} and places the new element
+  # **before** it. Appends at the end if a match is not found.
+  #
+  # Useful when a config option should be inserted to a specific location,
+  # or when assigning a comment to an option.
+  class BeforePlacer < Placer
+    # @param [Matcher] matcher
     def initialize(matcher)
       @matcher = matcher
     end
@@ -30,10 +47,12 @@ module CFA
     end
   end
 
-  # Specialized placer, that allows to place config value after found one.
-  # If noone is found, then append to the end
-  # Useful, when config option should be inserted to specific location.
-  class AfterPlacer
+  # Finds a specific element using a {Matcher} and places the new element
+  # **after** it.  Appends at the end if a match is not found.
+  #
+  # Useful when a config option should be inserted to a specific location.
+  class AfterPlacer < Placer
+    # @param [Matcher] matcher
     def initialize(matcher)
       @matcher = matcher
     end
@@ -51,11 +70,13 @@ module CFA
     end
   end
 
-  # Specialized placer, that allows to place config value instead of found one.
-  # If noone is found, then append to the end
-  # Useful, when value already exists and detected by matcher. Then easy add
-  # with this placer replace it carefully to correct location.
-  class ReplacePlacer
+  # Finds a specific element using a {Matcher} and **replaces** it
+  # with the new element.  Appends at the end if a match is not found.
+  #
+  # Useful in key-value configuration files where a specific key
+  # needs to be assigned.
+  class ReplacePlacer < Placer
+    # @param [Matcher] matcher
     def initialize(matcher)
       @matcher = matcher
     end
