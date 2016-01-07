@@ -50,6 +50,8 @@ module CFA
       to_proc.call(element)
     end
 
+  private
+
     def key_match?(element, key)
       return true unless key
 
