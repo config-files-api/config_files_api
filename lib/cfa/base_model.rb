@@ -100,6 +100,9 @@ module CFA
       data.merge(new_data)
     end
 
+    # Modify an **existing** entry and return `true`,
+    # or do nothing and return `false`.
+    # @return [Boolean]
     def modify(key, value)
       # if already set, just change value
       return false unless data[key]
@@ -108,10 +111,15 @@ module CFA
       true
     end
 
+    # Replace a commented out entry and return `true`,
+    # or do nothing and return `false`.
+    # @return [Boolean]
     def uncomment(key, value)
       # Try to find if it is commented out, so we can replace line
       matcher = Matcher.new(
         collection:    "#comment",
+        # FIXME: this assumes a specific "=" syntax, bypassing the lens
+        # FIXME: this will match also "# If you set FOO=bar then..."
         value_matcher: /(\s|^)#{key}\s*=/
       )
       return false unless  data.data.any?(&matcher)
