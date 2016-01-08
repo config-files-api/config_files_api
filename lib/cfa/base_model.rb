@@ -67,19 +67,29 @@ module CFA
 
   protected
 
-    # generates accessors for trivial key-value attributes
+    # Generates accessors for trivial key-value attributes
+    # @param attrs [Hash{Symbol => String}] mapping of methods to file keys
+    #
+    # @example Usage
+    #   class FooModel < CFA::BaseModel
+    #     attributes(
+    #       server:        "server",
+    #       read_timeout:  "ReadTimeout",
+    #       write_timeout: "WriteTimeout"
+    #     )
+    #     ...
+    #   end
     def self.attributes(attrs)
-      attrs.each_pair do |key, value|
-        define_method(key) do
-          generic_get(value)
+      attrs.each_pair do |method_name, key|
+        define_method(method_name) do
+          generic_get(key)
         end
 
-        define_method(:"#{key.to_s}=") do |target|
-          generic_set(value, target)
+        define_method(:"#{method_name.to_s}=") do |value|
+          generic_set(key, value)
         end
       end
     end
-    private_class_method :attributes
 
     attr_accessor :data
 
@@ -106,6 +116,7 @@ module CFA
       )
       return false unless  data.data.any?(&matcher)
 
+      # FIXME: this assumes that *data* is an AugeasTree
       data.add(key, value, ReplacePlacer.new(matcher))
       true
     end
