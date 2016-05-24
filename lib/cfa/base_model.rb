@@ -163,6 +163,9 @@ module CFA
         "@false_value=#{@false_value.inspect}>"
     end
 
+    # also have better to_s
+    alias_method :to_s, :inspect
+
   private
 
     def data
