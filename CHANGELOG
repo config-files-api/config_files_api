@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue May 24 13:24:15 UTC 2016 - jreidinger@suse.com
+
+- better inspecting of BooleanValue objects (helps with debugging
+  various bncs, like bnc#980108 or bnc#940465)
+- 0.3.1
+
+-------------------------------------------------------------------
 Mon Dec 21 13:29:54 UTC 2015 - jreidinger@suse.com
 
 - allow specifying a default file handler for all models

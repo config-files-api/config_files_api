@@ -156,6 +156,16 @@ module CFA
       @model.generic_set(@name, value ? @true_value : @false_value)
     end
 
+    # enhanced inspect method to contain important data
+    def inspect
+      "#<CFA::BooleanValue:0x#{object_id} name=#{@name.inspect}, " \
+        "data=#{data.inspect}, true_value=#{@true_value.inspect}, " \
+        "false_value=#{@false_value.inspect}>"
+    end
+
+    # also have better to_s
+    alias_method :to_s, :inspect
+
   private
 
     def data
