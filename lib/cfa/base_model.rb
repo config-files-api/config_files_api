@@ -160,7 +160,7 @@ module CFA
     def inspect
       "#<CFA::BooleanValue:0x#{object_id} name=#{@name.inspect}, " \
         "data=#{data.inspect}, true_value=#{@true_value.inspect}, " \
-        "@false_value=#{@false_value.inspect}>"
+        "false_value=#{@false_value.inspect}>"
     end
 
     # also have better to_s
