@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Sep 27 09:17:51 UTC 2016 - jreidinger@suse.com
+
+- support augeas nodes containing value and also attached tree
+  below it like e.g. ntp.conf has (bnc#983486)
+- 0.4.0
+
+-------------------------------------------------------------------
 Tue May 24 13:24:15 UTC 2016 - jreidinger@suse.com
 
 - better inspecting of BooleanValue objects (helps with debugging
