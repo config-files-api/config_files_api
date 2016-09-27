@@ -162,7 +162,7 @@ module CFA
 
     def obtain_aug_key(prefix, key, arrays)
       if key.end_with?("[]")
-        array_key = key[0..-3]
+        array_key = key[0..-3] # remove trailing []
         arrays[array_key] ||= 0
         arrays[array_key] += 1
         key = array_key + "[#{arrays[array_key]}]"
