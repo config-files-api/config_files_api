@@ -10,6 +10,13 @@ describe CFA::AugeasParser do
       expect(subject.parse(example_file)).to be_a(CFA::AugeasTree)
     end
 
+    it "can handle augeas with value and three below" do
+      parser = CFA::AugeasParser.new("ntp.lns")
+      tree = parser.parse(load_data("ntp.conf"))
+      expect(tree["controlkey"].value).to eq "1"
+      expect(tree["controlkey"].tree).to be_a CFA::AugeasTree
+    end
+
     it "raises exception if augeas failed during parsing" do
       example_file = "invalid syntax\n"
 

@@ -47,6 +47,24 @@ module CFA
     end
   end
 
+  # Represents node that contain value and also subtree below it
+  # For easier traversing it pass #[] to subtree
+  class AugeasTreeValue
+    # value in node
+    attr_accessor :value
+    # subtree below node
+    attr_accessor :tree
+
+    def initialize(tree, value)
+      @tree = tree
+      @value = value
+    end
+
+    def [](value)
+      tree[value]
+    end
+  end
+
   # Represent parsed augeas config tree with user friendly methods
   class AugeasTree
     # low level access to augeas structure
@@ -70,6 +88,8 @@ module CFA
       element[:value] = value
     end
 
+    # finds given value in tree. It can return value of node, {AugeasTree}
+    # attached to key or its combination as {AugeasTreeValue}
     def [](key)
       entry = @data.find { |d| d[:key] == key }
       return entry[:value] if entry
@@ -77,6 +97,8 @@ module CFA
       nil
     end
 
+    # sets to given key value in tree. It can be value of node, {AugeasTree}
+    # attached to key or its combination as {AugeasTreeValue}
     def []=(key, value)
       entry = @data.find { |d| d[:key] == key }
       if entry
@@ -112,33 +134,25 @@ module CFA
       arrays = {}
 
       @data.each do |entry|
-        aug_key = obtain_aug_key(prefix, entry, arrays)
-        if entry[:value].is_a? AugeasTree
-          entry[:value].save_to_augeas(aug, aug_key)
-        else
-          report_error(aug) unless aug.set(aug_key, entry[:value])
-        end
-      end
-    end
-
-    # @note for debugging purpose only
-    def dump_tree(prefix = "")
-      arrays = {}
-
-      @data.each_with_object("") do |entry, res|
-        aug_key = obtain_aug_key(prefix, entry, arrays)
-        if entry[:value].is_a? AugeasTree
-          res << entry[:value].dump_tree(aug_key)
-        else
-          res << aug_key << "\n"
-        end
+        save_entry(entry[:key], entry[:value], arrays, aug, prefix)
       end
     end
 
   private
 
-    def obtain_aug_key(prefix, entry, arrays)
-      key = entry[:key]
+    def save_entry(key, value, arrays, aug, prefix)
+      aug_key = obtain_aug_key(prefix, key, arrays)
+      case value
+      when AugeasTree then value.save_to_augeas(aug, aug_key)
+      when AugeasTreeValue
+        report_error(aug) unless aug.set(aug_key, value.value)
+        value.tree.save_to_augeas(aug, aug_key)
+      else
+        report_error(aug) unless aug.set(aug_key, value)
+      end
+    end
+
+    def obtain_aug_key(prefix, key, arrays)
       if key.end_with?("[]")
         array_key = key.sub(/\[\]$/, "")
         arrays[array_key] ||= 0
@@ -162,12 +176,13 @@ module CFA
 
     def load_value(aug, aug_key)
       nested = !aug.match("#{aug_key}/*").empty?
+      value = aug.get(aug_key)
       if nested
         subtree = AugeasTree.new
         subtree.load_from_augeas(aug, aug_key)
-        subtree
+        value ? AugeasTreeValue.new(subtree, value) : subtree
       else
-        aug.get(aug_key)
+        value
       end
     end
   end
@@ -186,6 +201,7 @@ module CFA
       @lens = lens
     end
 
+    # parses given string and returns AugeasTree instance
     def parse(raw_string)
       @old_content = raw_string
 
@@ -203,6 +219,7 @@ module CFA
       end
     end
 
+    # Serializes AugeasTree instance into returned string
     def serialize(data)
       # open augeas without any autoloading and it should not touch disk and
       # load lenses as needed only
@@ -228,13 +245,13 @@ module CFA
     def report_error(aug)
       error = aug.error
       # zero is no error, so problem in lense
-      if aug.error[:code] != 0
+      if aug.error[:code].nonzero?
         raise "Augeas error #{error[:message]}. Details: #{error[:details]}."
-      else
-        msg = aug.get("/augeas/text/store/error/message")
-        location = aug.get("/augeas/text/store/error/lens")
-        raise "Augeas parsing/serializing error: #{msg} at #{location}"
       end
+
+      msg = aug.get("/augeas/text/store/error/message")
+      location = aug.get("/augeas/text/store/error/lens")
+      raise "Augeas parsing/serializing error: #{msg} at #{location}"
     end
   end
 end
