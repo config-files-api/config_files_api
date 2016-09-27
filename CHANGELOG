@@ -2,7 +2,7 @@
 Tue Sep 27 09:17:51 UTC 2016 - jreidinger@suse.com
 
 - support augeas nodes containing value and also attached tree
-  below it like e.g. ntp.conf have (bnc#983486)
+  below it like e.g. ntp.conf has (bnc#983486)
 - 0.4.0
 
 -------------------------------------------------------------------

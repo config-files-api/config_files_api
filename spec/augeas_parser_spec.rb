@@ -10,7 +10,7 @@ describe CFA::AugeasParser do
       expect(subject.parse(example_file)).to be_a(CFA::AugeasTree)
     end
 
-    it "can handle augeas with value and three below" do
+    it "can handle augeas with value and a tree below" do
       parser = CFA::AugeasParser.new("ntp.lns")
       tree = parser.parse(load_data("ntp.conf"))
       expect(tree["controlkey"].value).to eq "1"

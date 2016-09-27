@@ -82,14 +82,22 @@ module CFA
       @data.reject! { |entry| entry[:key] == key }
     end
 
+    # adds the given value for the key in tree.
+    # @param value can be value of node, {AugeasTree}
+    #   attached to key or its combination as {AugeasTreeValue}
+    # @param placer object determining where to insert value in tree.
+    #   Useful e.g. to specify order of keys or placing comment above of given
+    #   key.
     def add(key, value, placer = AppendPlacer.new)
       element = placer.new_element(self)
       element[:key] = key
       element[:value] = value
     end
 
-    # finds given value in tree. It can return value of node, {AugeasTree}
-    # attached to key or its combination as {AugeasTreeValue}
+    # finds given value in tree.
+    # @return It can return value of node, {AugeasTree}
+    #   attached to key or its combination as {AugeasTreeValue}.
+    #   Also nil can be returned if key not found.
     def [](key)
       entry = @data.find { |d| d[:key] == key }
       return entry[:value] if entry
@@ -97,8 +105,8 @@ module CFA
       nil
     end
 
-    # sets to given key value in tree. It can be value of node, {AugeasTree}
-    # attached to key or its combination as {AugeasTreeValue}
+    # Sets the given value for the key in tree. It can be value of node,
+    # {AugeasTree} attached to key or its combination as {AugeasTreeValue}
     def []=(key, value)
       entry = @data.find { |d| d[:key] == key }
       if entry
