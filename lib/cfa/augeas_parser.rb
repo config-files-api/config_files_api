@@ -125,13 +125,12 @@ module CFA
 
     # @note for internal usage only
     # @private
-    def load_from_augeas(aug, prefix)
-      matches = aug.match("#{prefix}/*")
-
-      @data = matches.map do |aug_key|
+    def load_from_augeas(aug, prefix, keys_cache)
+      @data = keys_cache.keys_for_prefix(prefix).map do |key|
+        aug_key = prefix + "/" + key
         {
           key:   load_key(prefix, aug_key),
-          value: load_value(aug, aug_key)
+          value: load_value(aug, aug_key, keys_cache)
         }
       end
     end
@@ -184,12 +183,14 @@ module CFA
       key.end_with?("]") ? key.sub(/\[\d+\]$/, "[]") : key
     end
 
-    def load_value(aug, aug_key)
-      nested = !aug.match("#{aug_key}/*").empty?
+    def load_value(aug, aug_key, keys_cache)
+      subkeys = keys_cache.keys_for_prefix(aug_key)
+
+      nested = !subkeys.empty?
       value = aug.get(aug_key)
       if nested
         subtree = AugeasTree.new
-        subtree.load_from_augeas(aug, aug_key)
+        subtree.load_from_augeas(aug, aug_key, keys_cache)
         value ? AugeasTreeValue.new(subtree, value) : subtree
       else
         value
@@ -222,8 +223,10 @@ module CFA
         aug.set("/input", raw_string)
         report_error(aug) unless aug.text_store(@lens, "/input", "/store")
 
+        keys_cache = AugeasKeysCache.new(aug)
+
         tree = AugeasTree.new
-        tree.load_from_augeas(aug, "/store")
+        tree.load_from_augeas(aug, "/store", keys_cache)
 
         return tree
       end
@@ -263,5 +266,38 @@ module CFA
       location = aug.get("/augeas/text/store/error/lens")
       raise "Augeas parsing/serializing error: #{msg} at #{location}"
     end
+  end
+end
+
+class AugeasKeysCache
+  STORE_PREFIX = "/store"
+  STORE_LEN = 6
+
+  def initialize(aug)
+    @cache = {}
+    search_path = "#{STORE_PREFIX}/*"
+    loop do
+      matches = aug.match(search_path)
+      break if matches.empty?
+      matches.each do |match|
+        path = match[(STORE_LEN+1)..-1].split("/")
+        leap = path.pop
+        target = path.reduce(@cache) do |acc, p|
+          acc[p]
+        end
+
+        target[leap] = {}
+      end
+      search_path += "/*"
+    end
+  end
+
+  def keys_for_prefix(prefix)
+    path = prefix[STORE_LEN..-1]
+    path = path[1..-1] if path.start_with?("/")
+    path = path.split("/")
+    matches = path.reduce(@cache) { |a, e| a[e] }
+
+    matches.keys
   end
 end
