@@ -178,8 +178,10 @@ module CFA
     end
 
     def load_key(prefix, aug_key)
-      key = aug_key.sub(/^#{Regexp.escape(prefix)}\//, "")
-      key.sub(/\[\d+\]$/, "[]")
+      # clean from key prefix and for collection remove number inside []
+      # +1 for size due to ending '/' not part of prefix
+      key = aug_key[(prefix.size + 1)..-1]
+      key.end_with?("]") ? key.sub(/\[\d+\]$/, "[]") : key
     end
 
     def load_value(aug, aug_key)
