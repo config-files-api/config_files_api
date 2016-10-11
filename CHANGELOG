@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Oct 11 14:58:24 UTC 2016 - jreidinger@suse.com
+
+- optimize loading configuration files with augeas by reducing
+  number of augeas match calls (bsc#877047)
+- 0.4.1
+
+-------------------------------------------------------------------
 Tue Sep 27 09:17:51 UTC 2016 - jreidinger@suse.com
 
 - support augeas nodes containing value and also attached tree
