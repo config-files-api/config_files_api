@@ -273,13 +273,15 @@ end
 # prevent too many aug.match calls which are expensive.
 class AugeasKeysCache
   STORE_PREFIX = "/store".freeze
-  STORE_LEN = 6
-  STORE_LEN_1 = 7
+  STORE_LEN = STORE_PREFIX.size
+  STORE_LEN_1 = STORE_LEN + 1
 
+  # initialize cache from passed augeas object
   def initialize(aug)
     fill_cache(aug)
   end
 
+  # returns list of keys available on given prefix
   def keys_for_prefix(prefix)
     cut = prefix.length > STORE_LEN ? STORE_LEN_1 : STORE_LEN
     path = prefix[cut..-1]
