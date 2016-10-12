@@ -1,5 +1,6 @@
 # use with `time ruby <path>` to test changes in library
-# goal of this tests are to measure time, for correctness is used tests in spec directory
+# goal of this tests are to measure time, for correctness is used
+# tests in spec directory
 
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 

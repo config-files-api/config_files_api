@@ -269,27 +269,14 @@ module CFA
   end
 end
 
+# Cache that holds all avaiable keys in augeas tree. It is used to
+# prevent too many aug.match calls which are expensive.
 class AugeasKeysCache
-  STORE_PREFIX = "/store"
+  STORE_PREFIX = "/store".freeze
   STORE_LEN = 6
 
   def initialize(aug)
-    @cache = {}
-    search_path = "#{STORE_PREFIX}/*"
-    loop do
-      matches = aug.match(search_path)
-      break if matches.empty?
-      matches.each do |match|
-        path = match[(STORE_LEN+1)..-1].split("/")
-        leap = path.pop
-        target = path.reduce(@cache) do |acc, p|
-          acc[p]
-        end
-
-        target[leap] = {}
-      end
-      search_path += "/*"
-    end
+    fill_cache(aug)
   end
 
   def keys_for_prefix(prefix)
@@ -299,5 +286,31 @@ class AugeasKeysCache
     matches = path.reduce(@cache) { |a, e| a[e] }
 
     matches.keys
+  end
+
+private
+
+  def fill_cache(aug)
+    @cache = {}
+    search_path = "#{STORE_PREFIX}/*"
+    loop do
+      matches = aug.match(search_path)
+      break if matches.empty?
+      assign_matches(matches, @cache)
+
+      search_path += "/*"
+    end
+  end
+
+  def assign_matches(matches, cache)
+    matches.each do |match|
+      path = match[(STORE_LEN + 1)..-1].split("/")
+      leap = path.pop
+      target = path.reduce(cache) do |acc, p|
+        acc[p]
+      end
+
+      target[leap] = {}
+    end
   end
 end
