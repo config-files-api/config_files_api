@@ -125,13 +125,12 @@ module CFA
 
     # @note for internal usage only
     # @private
-    def load_from_augeas(aug, prefix)
-      matches = aug.match("#{prefix}/*")
-
-      @data = matches.map do |aug_key|
+    def load_from_augeas(aug, prefix, keys_cache)
+      @data = keys_cache.keys_for_prefix(prefix).map do |key|
+        aug_key = prefix + "/" + key
         {
           key:   load_key(prefix, aug_key),
-          value: load_value(aug, aug_key)
+          value: load_value(aug, aug_key, keys_cache)
         }
       end
     end
@@ -178,16 +177,20 @@ module CFA
     end
 
     def load_key(prefix, aug_key)
-      key = aug_key.sub(/^#{Regexp.escape(prefix)}\//, "")
-      key.sub(/\[\d+\]$/, "[]")
+      # clean from key prefix and for collection remove number inside []
+      # +1 for size due to ending '/' not part of prefix
+      key = aug_key[(prefix.size + 1)..-1]
+      key.end_with?("]") ? key.sub(/\[\d+\]$/, "[]") : key
     end
 
-    def load_value(aug, aug_key)
-      nested = !aug.match("#{aug_key}/*").empty?
+    def load_value(aug, aug_key, keys_cache)
+      subkeys = keys_cache.keys_for_prefix(aug_key)
+
+      nested = !subkeys.empty?
       value = aug.get(aug_key)
       if nested
         subtree = AugeasTree.new
-        subtree.load_from_augeas(aug, aug_key)
+        subtree.load_from_augeas(aug, aug_key, keys_cache)
         value ? AugeasTreeValue.new(subtree, value) : subtree
       else
         value
@@ -220,8 +223,10 @@ module CFA
         aug.set("/input", raw_string)
         report_error(aug) unless aug.text_store(@lens, "/input", "/store")
 
+        keys_cache = AugeasKeysCache.new(aug)
+
         tree = AugeasTree.new
-        tree.load_from_augeas(aug, "/store")
+        tree.load_from_augeas(aug, "/store", keys_cache)
 
         return tree
       end
@@ -260,6 +265,55 @@ module CFA
       msg = aug.get("/augeas/text/store/error/message")
       location = aug.get("/augeas/text/store/error/lens")
       raise "Augeas parsing/serializing error: #{msg} at #{location}"
+    end
+  end
+end
+
+# Cache that holds all avaiable keys in augeas tree. It is used to
+# prevent too many aug.match calls which are expensive.
+class AugeasKeysCache
+  STORE_PREFIX = "/store".freeze
+  STORE_LEN = STORE_PREFIX.size
+  STORE_LEN_1 = STORE_LEN + 1
+
+  # initialize cache from passed augeas object
+  def initialize(aug)
+    fill_cache(aug)
+  end
+
+  # returns list of keys available on given prefix
+  def keys_for_prefix(prefix)
+    cut = prefix.length > STORE_LEN ? STORE_LEN_1 : STORE_LEN
+    path = prefix[cut..-1]
+    path = path.split("/")
+    matches = path.reduce(@cache) { |a, e| a[e] }
+
+    matches.keys
+  end
+
+private
+
+  def fill_cache(aug)
+    @cache = {}
+    search_path = "#{STORE_PREFIX}/*"
+    loop do
+      matches = aug.match(search_path)
+      break if matches.empty?
+      assign_matches(matches, @cache)
+
+      search_path += "/*"
+    end
+  end
+
+  def assign_matches(matches, cache)
+    matches.each do |match|
+      path = match[STORE_LEN_1..-1].split("/")
+      leap = path.pop
+      target = path.reduce(cache) do |acc, p|
+        acc[p]
+      end
+
+      target[leap] = {}
     end
   end
 end
