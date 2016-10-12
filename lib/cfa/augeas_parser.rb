@@ -274,14 +274,15 @@ end
 class AugeasKeysCache
   STORE_PREFIX = "/store".freeze
   STORE_LEN = 6
+  STORE_LEN_1 = 7
 
   def initialize(aug)
     fill_cache(aug)
   end
 
   def keys_for_prefix(prefix)
-    path = prefix[STORE_LEN..-1]
-    path = path[1..-1] if path.start_with?("/")
+    cut = prefix.length > STORE_LEN ? STORE_LEN_1 : STORE_LEN
+    path = prefix[cut..-1]
     path = path.split("/")
     matches = path.reduce(@cache) { |a, e| a[e] }
 
@@ -304,7 +305,7 @@ private
 
   def assign_matches(matches, cache)
     matches.each do |match|
-      path = match[(STORE_LEN + 1)..-1].split("/")
+      path = match[(STORE_LEN_1)..-1].split("/")
       leap = path.pop
       target = path.reduce(cache) do |acc, p|
         acc[p]
