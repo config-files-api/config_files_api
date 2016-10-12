@@ -305,7 +305,7 @@ private
 
   def assign_matches(matches, cache)
     matches.each do |match|
-      path = match[(STORE_LEN_1)..-1].split("/")
+      path = match[STORE_LEN_1..-1].split("/")
       leap = path.pop
       target = path.reduce(cache) do |acc, p|
         acc[p]
