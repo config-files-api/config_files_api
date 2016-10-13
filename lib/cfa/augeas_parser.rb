@@ -273,8 +273,6 @@ end
 # prevent too many aug.match calls which are expensive.
 class AugeasKeysCache
   STORE_PREFIX = "/store".freeze
-  STORE_LEN = STORE_PREFIX.size
-  STORE_LEN_1 = STORE_LEN + 1
 
   # initialize cache from passed augeas object
   def initialize(aug)
