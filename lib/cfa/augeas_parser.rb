@@ -283,12 +283,7 @@ class AugeasKeysCache
 
   # returns list of keys available on given prefix
   def keys_for_prefix(prefix)
-    cut = prefix.length > STORE_LEN ? STORE_LEN_1 : STORE_LEN
-    path = prefix[cut..-1]
-    path = path.split("/")
-    matches = path.reduce(@cache) { |a, e| a[e] }
-
-    matches.keys
+    @cache[prefix] || []
   end
 
 private
@@ -307,13 +302,11 @@ private
 
   def assign_matches(matches, cache)
     matches.each do |match|
-      path = match[STORE_LEN_1..-1].split("/")
-      leap = path.pop
-      target = path.reduce(cache) do |acc, p|
-        acc[p]
-      end
-
-      target[leap] = {}
+      split_index = match.rindex("/")
+      prefix = match[0..(split_index - 1)]
+      key = match[(split_index + 1)..-1]
+      cache[prefix] ||= []
+      cache[prefix] << key
     end
   end
 end
