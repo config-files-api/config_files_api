@@ -22,11 +22,28 @@ module CFA
       self.data = parser.empty
     end
 
+    # Serializes *data* using *parser*
+    # and writes the resulting String using *file_handler*.
+    # @return [void]
+    # @raise a *file_handler* specific error if *file_path* cannot be written
+    #   e.g. due to missing permissions or living on a read only device.
+    # @raise a *parser* specific error. If *data* contain invalid values
+    #   then *parser* may raise an error.
+    #   A properly written BaseModel subclass should prevent that by preventing
+    #   insertion of such values in the first place.
     def save(changes_only: false)
       merge_changes if changes_only
       @file_handler.write(@file_path, @parser.serialize(data))
     end
 
+    # Reads a String using *file_handler*
+    # and parses it with *parser*, storing the result in *data*.
+    # @return [void]
+    # @raise a *file_handler* specific error. If *file_path* does not exist
+    #   or permission is not sufficient it may raise an error
+    #   depending on the used file handler.
+    # @raise a *parser* specific error. If the parsed String is malformed, then
+    #   depending on the used parser it may raise an error.
     def load
       self.data = @parser.parse(@file_handler.read(@file_path))
       @loaded = true
