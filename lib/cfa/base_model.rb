@@ -22,11 +22,25 @@ module CFA
       self.data = parser.empty
     end
 
+    # writes abstraction tree serialized parser to target
+    # destination via file_handler
+    # @raise file_handler depending error. If target cannot be written e.g. do
+    #   to missing permission or living on read only device.
+    # @raise parser specific error. If abstraction tree contain invalid values
+    #   then used parser can raise error in such case. In general it should not
+    #   happen in properly written model, as it should prevent inserting such
+    #   values
     def save(changes_only: false)
       merge_changes if changes_only
       @file_handler.write(@file_path, @parser.serialize(data))
     end
 
+    # reads abstraction tree parsed with parser from target
+    # destination via file_handler
+    # @raise file_handler depending error. If target do not exists or permission
+    #   is not sufficient it can raise error depending on used file_handler
+    # @raise parser specific error. If target file is malformed, then depending
+    #   on used parser it can raise error in such case.
     def load
       self.data = @parser.parse(@file_handler.read(@file_path))
       @loaded = true
