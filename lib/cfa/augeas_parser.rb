@@ -10,7 +10,8 @@ module CFA
   #
   # A `:key` is a String.
   # The key may have a collection suffix "[]". Note that in contrast
-  # with the underlying {::Augeas} library, an integer index is not present.
+  # with the underlying {::Augeas} library, an integer index is not present
+  # (which should make it easier to modify collections of elements).
   #
   # A `:value` is either a String or an AugeasTree.
   #
@@ -113,7 +114,6 @@ module CFA
     #
     # By default an AppendPlacer is used which produces duplicate keys
     # but ReplacePlacer can be used to replace the *first* duplicate.
-    # @todo what if we want to replace all duplicates?
     # @param key [String]
     # @param value [String,AugeasTree,AugeasTreeValue]
     # @param placer [Placer] determines where to insert value in tree.
@@ -154,13 +154,12 @@ module CFA
 
     # @param matcher [Matcher]
     # @return [Array<AugeasElement>] matching elements
-    # @todo for consistency this should allow &matcher too
     def select(matcher)
       @data.select(&matcher)
     end
 
     # @note for internal usage only
-    # @private
+    # @api private
     #
     # Initializes {#data} from *prefix* in *aug*.
     # @param aug [::Augeas]
@@ -178,7 +177,7 @@ module CFA
     end
 
     # @note for internal usage only
-    # @private
+    # @api private
     #
     # Saves {#data} to *prefix* in *aug*.
     # @param aug [::Augeas]

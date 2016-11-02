@@ -13,7 +13,6 @@ module CFA
   end
 
   # Places the new element at the end of the tree.
-  # Other classes use this Placer by default.
   class AppendPlacer < Placer
     def new_element(tree)
       res = {}

@@ -10,6 +10,9 @@ module CFA
   # It is used with the `&` syntax which makes the matcher
   # act like a block/lambda/Proc (via {Matcher#to_proc}).
   #
+  # @note The coupling to {AugeasTree}, {AugeasElement} is not a goal.
+  #   Once we have more parsers it will go away.
+  #
   # @example
   #    elements = [
   #                {key: "#comment[]", value: "\"magical\" mostly works"},
