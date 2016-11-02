@@ -82,8 +82,6 @@ module CFA
       @default_file_handler = value
     end
 
-  protected
-
     # Generates accessors for trivial key-value attributes
     # @param attrs [Hash{Symbol => String}] mapping of methods to file keys
     #
@@ -107,6 +105,8 @@ module CFA
         end
       end
     end
+
+  protected
 
     attr_accessor :data
 
