@@ -1,4 +1,25 @@
 -------------------------------------------------------------------
+Tue Oct 11 14:58:24 UTC 2016 - jreidinger@suse.com
+
+- optimize loading configuration files with augeas by reducing
+  number of augeas match calls (bsc#877047)
+- 0.4.1
+
+-------------------------------------------------------------------
+Tue Sep 27 09:17:51 UTC 2016 - jreidinger@suse.com
+
+- support augeas nodes containing value and also attached tree
+  below it like e.g. ntp.conf has (bnc#983486)
+- 0.4.0
+
+-------------------------------------------------------------------
+Tue May 24 13:24:15 UTC 2016 - jreidinger@suse.com
+
+- better inspecting of BooleanValue objects (helps with debugging
+  various bncs, like bnc#980108 or bnc#940465)
+- 0.3.1
+
+-------------------------------------------------------------------
 Mon Dec 21 13:29:54 UTC 2015 - jreidinger@suse.com
 
 - allow specifying a default file handler for all models

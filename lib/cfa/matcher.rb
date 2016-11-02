@@ -32,7 +32,7 @@ module CFA
         return false unless key_match?(element, key)
         return false unless collection_match?(element, collection)
         return false unless value_match?(element, value_matcher)
-        return false unless !block || block.call(element[:key], element[:value])
+        return false unless !block || yield(element[:key], element[:value])
         return true
       end
     end

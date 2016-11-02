@@ -49,3 +49,7 @@ Style/RegexpLiteral:
 # Easier recognization if access modified used
 Style/AccessModifierIndentation:
   EnforcedStyle: outdent
+
+# method_alias is safer and more predictable
+Style/Alias:
+  EnforcedStyle: prefer_alias_method
