@@ -26,10 +26,17 @@ module CFA
     # The constructor arguments are constraints to match on an element.
     # All constraints are optional.
     # All supplied constraints must match, so it is a conjunction.
-    # @param key           [Object,nil] foo
-    # @param collection    [Object,nil] bar
-    # @param value_matcher [Object,nil] baz
-    # @param block         [MatcherBinaryPredicate,nil]
+    # @param key           [Object,nil] if non-nil,
+    #   constrain to elements with the name "*key*"
+    # @param collection    [Object,nil] if non-nil,
+    #   constrain to elements with the name "*collection*[]"
+    # @param value_matcher [Object,Regexp,nil] if non-nil,
+    #   constrain to elements whose value is Object or matches Regexp
+    # @yieldparam blk_key   [Object]
+    # @yieldparam blk_value [Object]
+    # @yieldreturn      [Boolean] if the block is present,
+    #   constrain to elements for which the block(*blk_key*, *blk_value*)
+    #   returns true
     def initialize(key: nil, collection: nil, value_matcher: nil, &block)
       @matcher = lambda do |element|
         return false unless key_match?(element, key)
@@ -40,17 +47,9 @@ module CFA
       end
     end
 
-    # @return [Proc] see {#call} for its API
+    # @return [Proc{AugeasElement=>Boolean}]
     def to_proc
       @matcher
-    end
-
-    # @param element [Hash] containing
-    #   * `:key`
-    #   * `:value`
-    # @return [Boolean] whether the *element* matched
-    def call(element)
-      to_proc.call(element)
     end
 
   private
@@ -76,16 +75,6 @@ module CFA
       else
         matcher == element[:value]
       end
-    end
-  end
-
-  # An abstract class documenting the block argument to {Matcher#initialize}
-  class MatcherBinaryPredicate < Proc
-    # @param key [Object]
-    # @param value [Object]
-    # @return [Boolean]
-    def call(key, value)
-      abstract_method(key, value)
     end
   end
 end

@@ -1,19 +1,21 @@
 module CFA
   # Places a new {AugeasElement} into an {AugeasTree}.
-  # Children of this abstract class implement different ways **where**
-  # to place the entry.
+  # @abstract Subclasses implement different ways **where**
+  #   to place the entry by overriding {#new_element}.
   class Placer
     # @param  [AugeasTree] tree
     # @return [AugeasElement,Hash] the new element; it is empty!
     #   Note that the return value is actually a Hash; {AugeasElement}
     #   documents its structure.
-    def new_element(tree)
-      abstract_method(tree)
+    def new_element(_tree)
+      raise NotImplementedError,
+        "Subclasses of #{Module.nesting.first} must override #{__method__}"
     end
   end
 
   # Places the new element at the end of the tree.
   class AppendPlacer < Placer
+    # (see Placer#new_element)
     def new_element(tree)
       res = {}
       tree.data << res
@@ -33,6 +35,7 @@ module CFA
       @matcher = matcher
     end
 
+    # (see Placer#new_element)
     def new_element(tree)
       index = tree.data.index(&@matcher)
 
@@ -56,6 +59,7 @@ module CFA
       @matcher = matcher
     end
 
+    # (see Placer#new_element)
     def new_element(tree)
       index = tree.data.index(&@matcher)
 
@@ -80,6 +84,7 @@ module CFA
       @matcher = matcher
     end
 
+    # (see Placer#new_element)
     def new_element(tree)
       index = tree.data.index(&@matcher)
       res = {}
