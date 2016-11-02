@@ -13,7 +13,8 @@ module CFA
   # with the underlying {::Augeas} library, an integer index is not present
   # (which should make it easier to modify collections of elements).
   #
-  # A `:value` is either a String or an AugeasTree.
+  # A `:value` is either a String, or an {AugeasTree},
+  # or an {AugeasTreeValue} (which combines both).
   #
   # @return [Hash{Symbol => String, AugeasTree}]
   #
@@ -66,12 +67,12 @@ module CFA
     end
   end
 
-  # Represents node that contain value and also subtree below it
-  # For easier traversing it pass #[] to subtree
+  # Represents a node that contains both a value and a subtree below it.
+  # For easier traversal it forwards `#[]` to the subtree.
   class AugeasTreeValue
-    # value in node
+    # @return [String] the value in the node
     attr_accessor :value
-    # subtree below node
+    # @return [AugeasTree] the subtree below the node
     attr_accessor :tree
 
     def initialize(tree, value)
@@ -79,8 +80,9 @@ module CFA
       @value = value
     end
 
-    def [](value)
-      tree[value]
+    # (see AugeasTree#[])
+    def [](key)
+      tree[key]
     end
   end
 
