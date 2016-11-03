@@ -7,6 +7,8 @@ end
 if ENV["COVERAGE"]
   require "simplecov"
   SimpleCov.start
+  # do not cover specs
+  SimpleCov.add_filter "_spec.rb"
 
   # for coverage we need to load all ruby files
   src_location = File.expand_path("../../", __FILE__)

@@ -82,21 +82,31 @@ module CFA
       @default_file_handler = value
     end
 
-  protected
-
-    # generates accessors for trivial key-value attributes
+    # Generates accessors for trivial key-value attributes
+    # @param attrs [Hash{Symbol => String}] mapping of methods to file keys
+    #
+    # @example Usage
+    #   class FooModel < CFA::BaseModel
+    #     attributes(
+    #       server:        "server",
+    #       read_timeout:  "ReadTimeout",
+    #       write_timeout: "WriteTimeout"
+    #     )
+    #     ...
+    #   end
     def self.attributes(attrs)
-      attrs.each_pair do |key, value|
-        define_method(key) do
-          generic_get(value)
+      attrs.each_pair do |method_name, key|
+        define_method(method_name) do
+          generic_get(key)
         end
 
-        define_method(:"#{key.to_s}=") do |target|
-          generic_set(value, target)
+        define_method(:"#{method_name.to_s}=") do |value|
+          generic_set(key, value)
         end
       end
     end
-    private_class_method :attributes
+
+  protected
 
     attr_accessor :data
 
@@ -107,6 +117,9 @@ module CFA
       data.merge(new_data)
     end
 
+    # Modify an **existing** entry and return `true`,
+    # or do nothing and return `false`.
+    # @return [Boolean]
     def modify(key, value)
       # if already set, just change value
       return false unless data[key]
@@ -115,14 +128,20 @@ module CFA
       true
     end
 
+    # Replace a commented out entry and return `true`,
+    # or do nothing and return `false`.
+    # @return [Boolean]
     def uncomment(key, value)
       # Try to find if it is commented out, so we can replace line
       matcher = Matcher.new(
         collection:    "#comment",
+        # FIXME: this assumes a specific "=" syntax, bypassing the lens
+        # FIXME: this will match also "# If you set FOO=bar then..."
         value_matcher: /(\s|^)#{key}\s*=/
       )
       return false unless  data.data.any?(&matcher)
 
+      # FIXME: this assumes that *data* is an AugeasTree
       data.add(key, value, ReplacePlacer.new(matcher))
       true
     end
