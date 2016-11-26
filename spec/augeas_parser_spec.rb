@@ -107,15 +107,31 @@ end
 
 describe CFA::AugeasCollection do
   subject(:collection) do
-    parser = CFA::AugeasParser.new("sudoers.lns")
-    tree = parser.parse(load_data("sudoers"))
-    tree.collection("#comment")
+    parser = CFA::AugeasParser.new(lens)
+    tree = parser.parse(data)
+    tree.collection(key)
   end
 
-  describe "#delete" do
+  describe "#delete (simple value)" do
+    let(:lens) {"sudoers.lns"}
+    let(:data) {load_data("sudoers")}
+    let(:key) {"#comments"}
+
     it "removes from collection all elements matching parameter" do
       collection.delete(/visudo/)
       expect(collection.none? { |e| e =~ /visudo/ }).to eq true
     end
+  end
+
+  describe "#delete (complex value)" do
+    let(:lens) {"ntp.lns"}
+    let(:data) {"restrict -4 default notrap nomodify nopeer noquery\nrestrict -6 default notrap nomodify nopeer noquery\n"}
+    let(:key) {"restrict"}
+
+    it "removes from collection a complex value" do
+      value = ntp_restrict_value("-4 default notrap nomodify nopeer noquery")
+      collection.delete(value)
+      expect(collection.none? {|e| e.value == "-4"}).to eq(true)
+    end   
   end
 end
