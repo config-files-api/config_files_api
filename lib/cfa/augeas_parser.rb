@@ -84,6 +84,14 @@ module CFA
     def [](key)
       tree[key]
     end
+
+    def ==(other)
+      other.class == self.class &&
+      other.value == self.value &&
+      other.tree == self.tree
+    end
+
+    alias :eql? :==
   end
 
   # Represents a parsed Augeas config tree with user friendly methods
@@ -192,6 +200,13 @@ module CFA
         save_entry(entry[:key], entry[:value], arrays, aug, prefix)
       end
     end
+
+    def ==(other)
+      other.class == self.class &&
+      other.data == self.data 
+    end
+
+    alias :eql? :==
 
   private
 
