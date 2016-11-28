@@ -87,8 +87,8 @@ module CFA
 
     def ==(other)
       other.class == self.class &&
-      other.value == self.value &&
-      other.tree == self.tree
+        other.value == value &&
+        other.tree == tree
     end
 
     alias_method :eql?, :==
@@ -203,7 +203,7 @@ module CFA
 
     def ==(other)
       other.class == self.class &&
-      other.data == self.data 
+        other.data == data
     end
 
     alias_method :eql?, :==
