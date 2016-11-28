@@ -91,7 +91,7 @@ module CFA
       other.tree == self.tree
     end
 
-    alias :eql? :==
+    alias_method :eql?, :==
   end
 
   # Represents a parsed Augeas config tree with user friendly methods
@@ -206,7 +206,7 @@ module CFA
       other.data == self.data 
     end
 
-    alias :eql? :==
+    alias_method :eql?, :==
 
   private
 
