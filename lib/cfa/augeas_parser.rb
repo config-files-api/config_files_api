@@ -91,6 +91,8 @@ module CFA
         other.tree == tree
     end
 
+    # For objects of class Object, eql? is synonymous with ==:
+    # http://ruby-doc.org/core-2.3.3/Object.html#method-i-eql-3F
     alias_method :eql?, :==
   end
 
@@ -206,6 +208,8 @@ module CFA
         other.data == data
     end
 
+    # For objects of class Object, eql? is synonymous with ==:
+    # http://ruby-doc.org/core-2.3.3/Object.html#method-i-eql-3F
     alias_method :eql?, :==
 
   private
