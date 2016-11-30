@@ -86,9 +86,9 @@ module CFA
     end
 
     def ==(other)
-      other.class == self.class &&
-        other.value == value &&
-        other.tree == tree
+      [:class, :value, :tree].all? do |a|
+        public_send(a) == other.public_send(a)
+      end
     end
 
     # For objects of class Object, eql? is synonymous with ==:
@@ -119,11 +119,10 @@ module CFA
 
     # @param [String, Matcher]
     def delete(matcher)
-      if matcher.is_a?(CFA::Matcher)
-        @data.reject!(&matcher)
-      else
-        @data.reject! { |entry| entry[:key] == matcher }
+      unless matcher.is_a?(CFA::Matcher)
+        matcher = CFA::Matcher.new(key: matcher)
       end
+      @data.reject!(&matcher)
     end
 
     # Adds the given *value* for *key* in the tree.
@@ -208,8 +207,7 @@ module CFA
     end
 
     def ==(other)
-      other.class == self.class &&
-        other.data == data
+      [:class, :data].all? { |a| public_send(a) == other.public_send(a) }
     end
 
     # For objects of class Object, eql? is synonymous with ==:

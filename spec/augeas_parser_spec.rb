@@ -121,6 +121,26 @@ describe CFA::AugeasTree do
       expect(tree["new_cool_key"]).to eq "Ever cooler value"
     end
   end
+
+  describe "#==" do
+    let(:example_tree) do
+      tree = CFA::AugeasTree.new
+      tree.add("#comment", "sample comment")
+      tree
+    end
+
+    it "returns true for equal trees" do
+      other_tree = CFA::AugeasTree.new
+      other_tree.add("#comment", "sample comment")
+      expect(example_tree == example_tree.dup).to eq(true)
+    end
+
+    it "returns false for different trees" do
+      other_tree = CFA::AugeasTree.new
+      other_tree.add("server", "127.127.1.0")
+      expect(example_tree == other_tree).to eq(false)
+    end
+  end
 end
 
 describe CFA::AugeasCollection do
