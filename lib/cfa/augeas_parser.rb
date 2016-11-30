@@ -117,14 +117,13 @@ module CFA
       AugeasCollection.new(self, key)
     end
 
-    # @param key [String]
-    def delete(key)
-      @data.reject! { |entry| entry[:key] == key }
-    end
-
-    # @yieldparam block [Object] condition to satisfy
-    def delete_if(&_block)
-      @data.reject! { |entry| yield(entry) }
+    # @param [String, Matcher]
+    def delete(matcher)
+      if matcher.is_a?(CFA::Matcher)
+        @data.reject!(&matcher)
+      else
+        @data.reject! { |entry| entry[:key] == matcher }
+      end
     end
 
     # Adds the given *value* for *key* in the tree.
