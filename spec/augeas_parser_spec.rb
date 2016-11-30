@@ -87,6 +87,26 @@ describe CFA::AugeasTree do
     end
   end
 
+  describe "#delete_if" do
+    subject(:tree) { CFA::AugeasTree.new }
+
+    before do
+      tree.add("server", "127.127.1.0")
+      tree.add("#comment[]", "this is a comment")
+      tree.add("#comment[]", "other comment")
+    end
+
+    it "deletes entry that satisfies a condition" do
+      tree.delete_if { |entry| entry[:value] == "127.127.1.0" }
+      expect(tree["server"]).to eq nil
+    end
+
+    it "delete all entries that satisfy a condition" do
+      tree.delete_if { |entry| entry[:key].include?("comment") }
+      expect(tree.collection("#comment")).to be_empty
+    end
+  end
+
   describe "#[]" do
     it "returns value for given key" do
       subtree = tree.collection("spec")[0]

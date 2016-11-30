@@ -122,6 +122,11 @@ module CFA
       @data.reject! { |entry| entry[:key] == key }
     end
 
+    # @yieldparam block [Object] condition to satisfy
+    def delete_if(&_block)
+      @data.reject! { |entry| yield(entry) }
+    end
+
     # Adds the given *value* for *key* in the tree.
     #
     # By default an AppendPlacer is used which produces duplicate keys
