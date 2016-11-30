@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov 30 15:01:51 UTC 2016 - joseivanlopez@gmail.com
+
+- Improve deletion of elements in the augeas parser (needed to
+  fix ntp-client, bsc#983486)
+- 0.4.2
+
+-------------------------------------------------------------------
 Tue Oct 11 14:58:24 UTC 2016 - jreidinger@suse.com
 
 - optimize loading configuration files with augeas by reducing

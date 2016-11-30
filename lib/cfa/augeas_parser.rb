@@ -84,6 +84,16 @@ module CFA
     def [](key)
       tree[key]
     end
+
+    def ==(other)
+      [:class, :value, :tree].all? do |a|
+        public_send(a) == other.public_send(a)
+      end
+    end
+
+    # For objects of class Object, eql? is synonymous with ==:
+    # http://ruby-doc.org/core-2.3.3/Object.html#method-i-eql-3F
+    alias_method :eql?, :==
   end
 
   # Represents a parsed Augeas config tree with user friendly methods
@@ -107,9 +117,12 @@ module CFA
       AugeasCollection.new(self, key)
     end
 
-    # @param key [String]
-    def delete(key)
-      @data.reject! { |entry| entry[:key] == key }
+    # @param [String, Matcher]
+    def delete(matcher)
+      unless matcher.is_a?(CFA::Matcher)
+        matcher = CFA::Matcher.new(key: matcher)
+      end
+      @data.reject!(&matcher)
     end
 
     # Adds the given *value* for *key* in the tree.
@@ -192,6 +205,14 @@ module CFA
         save_entry(entry[:key], entry[:value], arrays, aug, prefix)
       end
     end
+
+    def ==(other)
+      [:class, :data].all? { |a| public_send(a) == other.public_send(a) }
+    end
+
+    # For objects of class Object, eql? is synonymous with ==:
+    # http://ruby-doc.org/core-2.3.3/Object.html#method-i-eql-3F
+    alias_method :eql?, :==
 
   private
 
