@@ -119,6 +119,7 @@ module CFA
 
     # @param [String, Matcher]
     def delete(matcher)
+      return if matcher.nil?
       unless matcher.is_a?(CFA::Matcher)
         matcher = CFA::Matcher.new(key: matcher)
       end

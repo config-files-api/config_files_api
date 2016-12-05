@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Dec  5 15:38:36 UTC 2016 - joseivanlopez@gmail.com
+
+- fix regression when passing nil to AugeasTree#delete (bsc#983486)
+- 0.4.3
+
+-------------------------------------------------------------------
 Wed Nov 30 15:01:51 UTC 2016 - joseivanlopez@gmail.com
 
 - Improve deletion of elements in the augeas parser (needed to

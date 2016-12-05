@@ -92,6 +92,12 @@ describe CFA::AugeasTree do
       tree.delete(matcher)
       expect(tree.collection("#comment")).to be_empty
     end
+
+    it "does not remove anything is nil is passed" do
+      size = tree.data.size
+      tree.delete(nil)
+      expect(tree.data.size).to eq(size)
+    end
   end
 
   describe "#[]" do
