@@ -53,14 +53,15 @@ module CFA
     # smart to at first modify existing value, then replace commented out code
     # and if even that doesn't work, then append it at the end
     # @note prefer to use specialized methods of children
-    def generic_set(key, value)
-      modify(key, value) || uncomment(key, value) || add_new(key, value)
+    def generic_set(key, value, tree = data)
+      modify(key, value, tree) || uncomment(key, value, tree) ||
+        add_new(key, value, tree)
     end
 
     # powerfull method that gets unformatted any value in config.
     # @note prefer to use specialized methods of children
-    def generic_get(key)
-      data[key]
+    def generic_get(key, tree = data)
+      tree[key]
     end
 
     # rubocop:disable Style/TrivialAccessors
@@ -120,18 +121,18 @@ module CFA
     # Modify an **existing** entry and return `true`,
     # or do nothing and return `false`.
     # @return [Boolean]
-    def modify(key, value)
+    def modify(key, value, tree)
       # if already set, just change value
-      return false unless data[key]
+      return false unless tree[key]
 
-      data[key] = value
+      tree[key] = value
       true
     end
 
     # Replace a commented out entry and return `true`,
     # or do nothing and return `false`.
     # @return [Boolean]
-    def uncomment(key, value)
+    def uncomment(key, value, tree)
       # Try to find if it is commented out, so we can replace line
       matcher = Matcher.new(
         collection:    "#comment",
@@ -139,15 +140,15 @@ module CFA
         # FIXME: this will match also "# If you set FOO=bar then..."
         value_matcher: /(\s|^)#{key}\s*=/
       )
-      return false unless  data.data.any?(&matcher)
+      return false unless tree.data.any?(&matcher)
 
       # FIXME: this assumes that *data* is an AugeasTree
-      data.add(key, value, ReplacePlacer.new(matcher))
+      tree.add(key, value, ReplacePlacer.new(matcher))
       true
     end
 
-    def add_new(key, value)
-      data.add(key, value)
+    def add_new(key, value, tree)
+      tree.add(key, value)
     end
   end
 
