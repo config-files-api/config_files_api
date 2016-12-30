@@ -44,6 +44,13 @@ describe CFA::AugeasParser do
       expect(subject.serialize(example_tree)).to eq "# test comment\n"
     end
 
+    xit "do not modify string if not changed from parse" do
+      parser = CFA::AugeasParser.new("ntp.lns")
+      data = load_data("ntp.conf")
+      tree = parser.parse(data)
+      expect(parser.serialize(tree)).to eq data
+    end
+
     it "raises exception if passed tree cannot be converted by augeas lens" do
       example_tree = CFA::AugeasTree.new
       example_tree["invalid"] = "test"
