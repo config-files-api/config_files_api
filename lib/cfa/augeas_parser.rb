@@ -38,12 +38,13 @@ module CFA
       element = placer.new_element(@tree)
       element[:key] = augeas_name
       element[:value] = value
+      element[:operation] = :add
       # FIXME: load_collection missing here
     end
 
     def delete(value)
       key = augeas_name
-      @tree.data.reject! do |entry|
+      to_remove = @tree.data.select do |entry|
         entry[:key] == key &&
           if value.is_a?(Regexp)
             value =~ entry[:value]
@@ -52,13 +53,15 @@ module CFA
           end
       end
 
+      to_remove.each { |e| e[:operation] = :remove }
+
       load_collection
     end
 
   private
 
     def load_collection
-      entries = @tree.data.select { |d| d[:key] == augeas_name }
+      entries = @tree.data.select { |d| d[:key] == augeas_name && d[:operation] != :remove }
       @collection = entries.map { |e| e[:value] }.freeze
     end
 
@@ -101,12 +104,27 @@ module CFA
     # Low level access to Augeas structure
     #
     # An ordered mapping, represented by an Array of Hashes
-    # with the keys :key and :value.
+    # with the keys :key, :value, :operation and :orig_key.
+    #
+    # - `:key` is modified key without index used by collection
+    # - `:value` is string value or instance of AugeasTree or AugeasTreeValue
+    # - `:operation` is internal variable holding modification of augeas structure.
+    #   it is used for minimal modification of source file
+    # - `:orig_key` is internal variable used to hold key with index
+    #
+    # @param filtered [true, false] if true, elements with remove operation are filtered from output
     #
     # @see AugeasElement
     #
-    # @return [Array<Hash{Symbol => String, AugeasTree}>]
-    attr_reader :data
+    # @return [Array<Hash{Symbol => Object}>] if filtered array is returned it 
+    #   is frozen, as modifications do not make sense there
+    def data(filtered: true)
+      if filtered
+        @data.select{ |e| e[:operation] != :remove }.freeze
+      else
+        @data
+      end
+    end
 
     def initialize
       @data = []
@@ -123,7 +141,8 @@ module CFA
       unless matcher.is_a?(CFA::Matcher)
         matcher = CFA::Matcher.new(key: matcher)
       end
-      @data.reject!(&matcher)
+      to_remove = @data.select(&matcher)
+      to_remove.each { |e| e[:operation] = :remove }
     end
 
     # Adds the given *value* for *key* in the tree.
@@ -139,6 +158,7 @@ module CFA
       element = placer.new_element(self)
       element[:key] = key
       element[:value] = value
+      element[:operation] = :add
     end
 
     # Finds given *key* in tree.
@@ -146,7 +166,7 @@ module CFA
     # @return [String,AugeasTree,AugeasTreeValue,nil] the first value for *key*,
     #   or `nil` if not found
     def [](key)
-      entry = @data.find { |d| d[:key] == key }
+      entry = @data.find { |d| d[:key] == key && d[:operation] != :remove }
       return entry[:value] if entry
 
       nil
@@ -160,10 +180,12 @@ module CFA
       entry = @data.find { |d| d[:key] == key }
       if entry
         entry[:value] = value
+        entry[:operation] = :modify
       else
         @data << {
           key:   key,
-          value: value
+          value: value,
+          operation: :add
         }
       end
     end
@@ -187,28 +209,16 @@ module CFA
         aug_key = prefix + "/" + key
         {
           key:   load_key(prefix, aug_key),
-          value: load_value(aug, aug_key, keys_cache)
+          value: load_value(aug, aug_key, keys_cache),
+          orig_key: stripped_path(prefix, aug_key),
+          operation: :keep
         }
       end
     end
 
-    # @note for internal usage only
-    # @api private
-    #
-    # Saves {#data} to *prefix* in *aug*.
-    # @param aug [::Augeas]
-    # @param prefix [String] Augeas path prefix
-    # @return [void]
-    def save_to_augeas(aug, prefix)
-      arrays = {}
-
-      @data.each do |entry|
-        save_entry(entry[:key], entry[:value], arrays, aug, prefix)
-      end
-    end
-
     def ==(other)
-      [:class, :data].all? { |a| public_send(a) == other.public_send(a) }
+      self.class == other.class &&
+        data == other.data
     end
 
     # For objects of class Object, eql? is synonymous with ==:
@@ -217,40 +227,15 @@ module CFA
 
   private
 
-    def save_entry(key, value, arrays, aug, prefix)
-      aug_key = obtain_aug_key(prefix, key, arrays)
-      case value
-      when AugeasTree then value.save_to_augeas(aug, aug_key)
-      when AugeasTreeValue
-        report_error(aug) unless aug.set(aug_key, value.value)
-        value.tree.save_to_augeas(aug, aug_key)
-      else
-        report_error(aug) unless aug.set(aug_key, value)
-      end
-    end
-
-    def obtain_aug_key(prefix, key, arrays)
-      if key.end_with?("[]")
-        array_key = key[0..-3] # remove trailing []
-        arrays[array_key] ||= 0
-        arrays[array_key] += 1
-        key = array_key + "[#{arrays[array_key]}]"
-      end
-
-      "#{prefix}/#{key}"
-    end
-
-    def report_error(aug)
-      error = aug.error
-      raise "Augeas error #{error[:message]}." \
-        "Details: #{error[:details]}."
-    end
-
     def load_key(prefix, aug_key)
       # clean from key prefix and for collection remove number inside []
       # +1 for size due to ending '/' not part of prefix
-      key = aug_key[(prefix.size + 1)..-1]
+      key = stripped_path(prefix, aug_key)
       key.end_with?("]") ? key.sub(/\[\d+\]$/, "[]") : key
+    end
+
+    def stripped_path(prefix, aug_key)
+      aug_key[(prefix.size + 1)..-1]
     end
 
     def load_value(aug, aug_key, keys_cache)
@@ -265,6 +250,87 @@ module CFA
       else
         value
       end
+    end
+  end
+
+  # Smart writer trying to do as less modification as possible.
+  # @note internal only, unstable API
+  class AugeasWriter
+    def self.write(aug, prefix, tree)
+      last_valid_entry_path = nil
+      tree.data(filtered: false).each do |entry|
+        if entry[:key].end_with?("[]")
+          if entry[:orig_key]
+            path = prefix + "/" + entry[:orig_key]
+          else
+            all_elements = tree.data(filtered: false).select { |e| e[:key] == entry[:key] }
+            nums = all_elements.map { |e| e[:orig_key] ? e[:orig_key][/^.*\[(\d+)\]$/, 1].to_i : 0 }
+            new_number = nums.max ? (nums.max + 1) : 1
+            path = prefix + "/" + entry[:key][0..-2] + new_number.to_s + "]"
+          end
+        else
+          path = prefix + "/" + entry[:key]
+        end
+        operation = entry[:operation] || :add
+        case operation
+        when :add
+          if last_valid_entry_path
+            report_error(aug) unless aug.insert(last_valid_entry_path, path, false)
+          else
+            e = find_first_valid(tree.data(filtered: false))
+            if e
+              e_path = prefix + "/" + e[:orig_key]
+              report_error(aug) unless aug.insert(e_path, path, true)
+            end
+          end
+          set_entry(aug, path, entry[:value])
+          last_valid_entry_path = path
+        when :remove
+          report_error(aug) unless aug.rm(path)
+        when :modify
+          set_entry(aug, path, entry[:value])
+          last_valid_entry_path = path
+        when :keep
+          if entry[:value].is_a?(AugeasTree)
+              write(aug, path, entry[:value])
+          elsif entry[:value].is_a?(AugeasTreeValue)
+              write(aug, path, entry[:value].tree)
+          end
+          last_valid_entry_path = path
+        else
+          raise "invalid operation"
+        end
+      end
+    end
+
+    private_class_method def self.set_entry(aug, path, value)
+      case value
+      when AugeasTree
+        report_error(aug) unless aug.touch(path)
+        write(aug, path, value)
+      when AugeasTreeValue
+        report_error(aug) unless aug.set(path, value.value)
+        write(aug, path, value.tree)
+      else
+        report_error(aug) unless aug.set(path, value)
+      end
+    end
+
+    private_class_method def self.find_first_valid(data)
+      data.find { |e| [:keep, :modify].include?(e[:operation]) }
+    end
+
+    # @param aug [::Augeas]
+    private_class_method def self.report_error(aug)
+      error = aug.error
+      # zero is no error, so problem in lense
+      if aug.error[:code].nonzero?
+        raise "Augeas error #{error[:message]}. Details: #{error[:details]}."
+      end
+
+      msg = aug.get("/augeas/text/store/error/message")
+      location = aug.get("/augeas/text/store/error/lens")
+      raise "Augeas parsing/serializing error: #{msg} at #{location}"
     end
   end
 
@@ -312,7 +378,8 @@ module CFA
       root = load_path = nil
       Augeas.open(root, load_path, Augeas::NO_MODL_AUTOLOAD) do |aug|
         aug.set("/input", @old_content || "")
-        data.save_to_augeas(aug, "/store")
+        aug.text_store(@lens, "/input", "/store") if @old_content
+        AugeasWriter.write(aug, "/store", data)
 
         res = aug.text_retrieve(@lens, "/input", "/store", "/output")
         report_error(aug) unless res

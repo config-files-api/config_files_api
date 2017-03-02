@@ -11,14 +11,20 @@ module CFA
       raise NotImplementedError,
         "Subclasses of #{Module.nesting.first} must override #{__method__}"
     end
+
+  protected
+
+    def create_element
+      { operation: :add }
+    end
   end
 
   # Places the new element at the end of the tree.
   class AppendPlacer < Placer
     # (see Placer#new_element)
     def new_element(tree)
-      res = {}
-      tree.data << res
+      res = create_element
+      tree.data(filtered: false) << res
 
       res
     end
@@ -37,14 +43,15 @@ module CFA
 
     # (see Placer#new_element)
     def new_element(tree)
-      index = tree.data.index(&@matcher)
+      index = tree.data(filtered: false).index(&@matcher)
 
-      res = {}
+      res = create_element
       if index
-        tree.data.insert(index, res)
+        tree.data(filtered: false).insert(index, res)
       else
-        tree.data << res
+        tree.data(filtered: false) << res
       end
+
       res
     end
   end
@@ -61,14 +68,15 @@ module CFA
 
     # (see Placer#new_element)
     def new_element(tree)
-      index = tree.data.index(&@matcher)
+      index = tree.data(filtered: false).index(&@matcher)
 
-      res = {}
+      res = create_element
       if index
-        tree.data.insert(index + 1, res)
+        tree.data(filtered: false).insert(index + 1, res)
       else
-        tree.data << res
+        tree.data(filtered: false) << res
       end
+
       res
     end
   end
@@ -86,13 +94,15 @@ module CFA
 
     # (see Placer#new_element)
     def new_element(tree)
-      index = tree.data.index(&@matcher)
-      res = {}
+      index = tree.data(filtered: false).index(&@matcher)
+      res = create_element
 
       if index
-        tree.data[index] = res
+        # remove old one and add new one, as it can have different key which cause problem to simple modify
+        tree.data(filtered: false)[index][:operation] = :remove
+        tree.data(filtered: false).insert(index + 1, res)
       else
-        tree.data << res
+        tree.data(filtered: false) << res
       end
 
       res

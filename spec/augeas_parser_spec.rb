@@ -44,7 +44,7 @@ describe CFA::AugeasParser do
       expect(subject.serialize(example_tree)).to eq "# test comment\n"
     end
 
-    xit "do not modify string if not changed from parse" do
+    it "do not modify string if not changed from parse" do
       parser = CFA::AugeasParser.new("ntp.lns")
       data = load_data("ntp.conf")
       tree = parser.parse(data)
