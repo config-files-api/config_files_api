@@ -261,21 +261,24 @@ module CFA
       tree.data(filtered: false).each do |entry|
         if entry[:key].end_with?("[]")
           if entry[:orig_key]
-            path = prefix + "/" + entry[:orig_key]
+            key = entry[:orig_key]
+            path = prefix + "/" + key
           else
             all_elements = tree.data(filtered: false).select { |e| e[:key] == entry[:key] }
             nums = all_elements.map { |e| e[:orig_key] ? e[:orig_key][/^.*\[(\d+)\]$/, 1].to_i : 0 }
             new_number = nums.max ? (nums.max + 1) : 1
-            path = prefix + "/" + entry[:key][0..-2] + new_number.to_s + "]"
+            key = entry[:key][0..-2] + new_number.to_s + "]"
+            path = prefix + "/" + key
           end
         else
-          path = prefix + "/" + entry[:key]
+          key = entry[:key]
+          path = prefix + "/" + key
         end
         operation = entry[:operation] || :add
         case operation
         when :add
           if last_valid_entry_path
-            report_error(aug) unless aug.insert(last_valid_entry_path, path, false)
+            report_error(aug) unless aug.insert(last_valid_entry_path, key, false)
           else
             e = find_first_valid(tree.data(filtered: false))
             if e

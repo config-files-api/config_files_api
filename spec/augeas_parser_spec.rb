@@ -1,6 +1,8 @@
 require_relative "spec_helper"
+
 require "cfa/augeas_parser"
 require "cfa/matcher"
+require "cfa/placer"
 
 def ntp_restrict_value(restrict_entry)
   entry = restrict_entry.split
@@ -132,6 +134,19 @@ describe CFA::AugeasTree do
     it "adds new key with given value if key is not already used" do
       tree["new_cool_key"] = "Ever cooler value"
       expect(tree["new_cool_key"]).to eq "Ever cooler value"
+    end
+  end
+
+  describe "#add" do
+    it "adds value where placer create it" do
+      parser = CFA::AugeasParser.new("puppet.lns")
+      file = "[main]\n# test1\n#test 2\n# test3\n"
+      tree = parser.parse(file)
+
+      matcher = CFA::Matcher.new(value_matcher: /test 2/)
+      placer = CFA::ReplacePlacer.new(matcher)
+      tree["main"].add("test", "data", placer)
+      expect(parser.serialize(tree)).to eq "[main]\n# test1\ntest=data\n#test3\n"
     end
   end
 
