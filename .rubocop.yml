@@ -1,6 +1,9 @@
 # Following
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md
 
+Metrics/BlockLenght:
+  Exclude: 'spec/**/*'
+
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md#strings
 Style/StringLiterals:
   EnforcedStyle: double_quotes

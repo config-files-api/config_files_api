@@ -98,7 +98,8 @@ module CFA
       res = create_element
 
       if index
-        # remove old one and add new one, as it can have different key which cause problem to simple modify
+        # remove old one and add new one, as it can have different key
+        # which cause problem to simple modify
         tree.data(filtered: false)[index][:operation] = :remove
         tree.data(filtered: false).insert(index + 1, res)
       else
