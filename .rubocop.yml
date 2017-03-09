@@ -32,7 +32,7 @@ Style/AlignParameters:
 
 # no extra indentation for case
 Style/CaseIndentation:
-  IndentWhenRelativeTo: end
+  EnforcedStyle: end
 
 # "unless" has a different connotation than "if not"
 Style/NegatedIf:
