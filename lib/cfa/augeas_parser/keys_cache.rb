@@ -37,4 +37,5 @@ module CFA
         cache[prefix] << key
       end
     end
+  end
 end
