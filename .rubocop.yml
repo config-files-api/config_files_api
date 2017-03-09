@@ -1,7 +1,7 @@
 # Following
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md
 
-Metrics/BlockLenght:
+Metrics/BlockLength:
   Exclude: 'spec/**/*'
 
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md#strings
