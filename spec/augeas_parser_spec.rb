@@ -146,7 +146,9 @@ describe CFA::AugeasTree do
       matcher = CFA::Matcher.new(value_matcher: /test 2/)
       placer = CFA::ReplacePlacer.new(matcher)
       tree["main"].add("test", "data", placer)
-      expect(parser.serialize(tree)).to eq "[main]\n# test1\ntest=data\n#test3\n"
+      expect(parser.serialize(tree)).to eq(
+        "[main]\n# test1\ntest=data\n#test3\n"
+      )
     end
   end
 
