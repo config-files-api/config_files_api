@@ -2,8 +2,8 @@ require "augeas"
 require "forwardable"
 require "cfa/placer"
 
-require "cga/augeas_parser/keys_cache"
-require "cga/augeas_parser/writer"
+require "cfa/augeas_parser/keys_cache"
+require "cfa/augeas_parser/writer"
 
 module CFA
   # A building block for {AugeasTree}.
