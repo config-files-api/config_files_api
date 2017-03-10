@@ -1,15 +1,22 @@
 module CFA
-  # Smart writer trying to do as less modification as possible.
+  # Goal of this class is to write back to augeas data stored in {AugeasTree}.
+  # It tries to only required changes, as augeas keeps inside flag if it is
+  # modified and if not modified, then part of file is kept untouched.
   # @note internal only, unstable API
+  # @private
   class AugeasWriter
+    # @param aug result of Augeas.create
     def initialize(aug)
       @aug = aug
     end
 
+    # write to augeas data in tree to given prefix
+    # @param prefix [String] where to write tree in augeas
+    # @param tree [CFA::AugeasTree] tree to write
     def write(prefix, tree)
       last_valid_entry_path = nil
       tree.data(filtered: false).each do |entry|
-        key, path = key_and_value(tree, entry, prefix)
+        key, path = key_and_path(tree, entry, prefix)
         process_operation(tree, entry, last_valid_entry_path, key, path)
         last_valid_entry_path = path if entry[:operation] != :remove
       end
@@ -19,6 +26,9 @@ module CFA
 
     attr_reader :aug
 
+    # returns available number for given collection that can be used to write
+    # @param tree [CFA::AugeasTree] tree where collection is defined
+    # @param key [String] collection name
     def new_array_number(tree, key)
       all_elements = tree.data(filtered: false)
                          .select { |e| e[:key] == key }
@@ -28,7 +38,8 @@ module CFA
       nums.max ? (nums.max + 1) : 1
     end
 
-    def key_and_value_array(tree, entry, prefix)
+    # construct augeas key and whole path where to write for collection
+    def key_and_path_array(tree, entry, prefix)
       if entry[:orig_key]
         key = entry[:orig_key]
       else
@@ -39,14 +50,24 @@ module CFA
       [key, path]
     end
 
-    def key_and_value(tree, entry, prefix)
+    # construct augeas key and whole path where to write
+    def key_and_path(tree, entry, prefix)
       if entry[:key].end_with?("[]")
-        key_and_value_array(tree, entry, prefix)
+        key_and_path_array(tree, entry, prefix)
       else
         [entry[:key], prefix + "/" + entry[:key]]
       end
     end
 
+    # it insert position for given key. Do not set its value.
+    # Its logic is to set it after last valid entry. If it is not defined
+    # then try to place it before first valid entry in tree. If there is
+    # no entry in tree, then do not insert position, which means, that
+    # following setting of value appends it to the end.
+    #
+    # @param last [String] path of last valid entry written to tree
+    # @param key [String] key that need to be inserted
+    # @param tree [CFA::AugeasTree] tree where is key located
     def insert_entry(last, key, tree)
       if last
         report_error { aug.insert(last, key, false) }
@@ -59,6 +80,14 @@ module CFA
       end
     end
 
+    # Do modification according to operation defined in AugeasEntry
+    # @param tree [CFA::AugeasTree] tree where entry lives
+    # @param entry [AugeasElement] entry to process
+    # @param last_valid_entry_path [String, nil] path of last valid entry
+    #   written or nil if there is no such entry
+    # @param key [String] valid augeas key for entry. Important for collections
+    #   which have key without its index, but augeas do not allow it.
+    # @param path [String] whole path where to write entry in augeas
     def process_operation(tree, entry,
       last_valid_entry_path, key, path)
       case entry[:operation]
@@ -72,6 +101,9 @@ module CFA
       end
     end
 
+    # writes value of entry to path and if it have sub-tree then call {write} on it
+    # @param path [String] path where to write
+    # @param entry [AugeasElement] entry to write
     def set_entry(path, entry)
       value = entry[:value]
       case value
@@ -85,6 +117,9 @@ module CFA
       recurse_write(path, entry)
     end
 
+    # calls write on entry if entry have sub-tree
+    # @param path [String] path of entry
+    # @param entry [AugeasElement]
     def recurse_write(path, entry)
       if entry[:value].is_a?(AugeasTree)
         write(path, entry[:value])
@@ -93,10 +128,16 @@ module CFA
       end
     end
 
+    # Finds first entry that is already in augeas, so it means entry,
+    # that is kept or only modified
     def find_first_valid(data)
       data.find { |e| [:keep, :modify].include?(e[:operation]) }
     end
 
+    # Calls block and if it failed, raise exception with details from augeas
+    # why it failed
+    # @yield call to aug that is secured
+    # @raise [RuntimeError]
     def report_error
       return if yield
 
