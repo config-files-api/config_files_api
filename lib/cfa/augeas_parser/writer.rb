@@ -13,13 +13,15 @@ module CFA
     # write to augeas data in tree to given prefix
     # @param prefix [String] where to write tree in augeas
     # @param tree [CFA::AugeasTree] tree to write
-    def write(prefix, tree)
+    def write(prefix, tree, top_level: true)
+      reset_lazy_remove if top_level
       last_valid_entry_path = nil
       tree.data(filtered: false).each do |entry|
         key, path = key_and_path(tree, entry, prefix)
-        process_operation(tree, entry, last_valid_entry_path, key, path)
+        process_operation(tree, entry, last_valid_entry_path, key, path, prefix)
         last_valid_entry_path = path if entry[:operation] != :remove
       end
+      do_lazy_remove if top_level
     end
 
   private
@@ -59,7 +61,7 @@ module CFA
       end
     end
 
-    # it insert position for given key. Do not set its value.
+    # It inserts a key at given position without setting its value.
     # Its logic is to set it after last valid entry. If it is not defined
     # then try to place it before first valid entry in tree. If there is
     # no entry in tree, then do not insert position, which means, that
@@ -68,15 +70,35 @@ module CFA
     # @param last [String] path of last valid entry written to tree
     # @param key [String] key that need to be inserted
     # @param tree [CFA::AugeasTree] tree where is key located
-    def insert_entry(last, key, tree)
+    def insert_entry(last, key, tree, prefix)
       if last
         report_error { aug.insert(last, key, false) }
       else
-        e = find_first_valid(tree.data(filtered: false))
+        e = find_first_surviving(tree.data(filtered: false))
         if e
           e_path = prefix + "/" + e[:orig_key]
           report_error { aug.insert(e_path, key, true) }
         end
+      end
+    end
+
+    # do lazy removing. Reason for doing this is collections.
+    # After each aug.rm it is renumbered, which is problem as later it will
+    # remove wrong entry. so we remove it in reverse order, which ignore
+    # numbering.
+    def lazy_remove(path)
+      @lazy_remove << path
+    end
+
+    # clears list of pathgs to remove
+    def reset_lazy_remove
+      @lazy_remove = []
+    end
+
+    # does lazy removing of nodes. For reasons see #lazy_remove
+    def do_lazy_remove
+      @lazy_remove.reverse.each do |path|
+        report_error { aug.rm(path) }
       end
     end
 
@@ -89,15 +111,15 @@ module CFA
     #   which have key without its index, but augeas do not allow it.
     # @param path [String] whole path where to write entry in augeas
     def process_operation(tree, entry,
-      last_valid_entry_path, key, path)
+      last_valid_entry_path, key, path, prefix)
       case entry[:operation]
       when :add, nil # add is default operation
-        insert_entry(last_valid_entry_path, key, tree)
+        insert_entry(last_valid_entry_path, key, tree, prefix)
         set_entry(path, entry)
-      when :remove then report_error { aug.rm(path) }
-      when :modify then set_entry(path, entry[:value])
+      when :remove then lazy_remove(path)
+      when :modify then set_entry(path, entry)
       when :keep then recurse_write(path, entry)
-      else raise "invalid operation"
+      else raise "invalid :operation in #{entry.inspect}"
       end
     end
 
@@ -122,15 +144,15 @@ module CFA
     # @param entry [AugeasElement]
     def recurse_write(path, entry)
       if entry[:value].is_a?(AugeasTree)
-        write(path, entry[:value])
+        write(path, entry[:value], top_level: false)
       elsif entry[:value].is_a?(AugeasTreeValue)
-        write(path, entry[:value].tree)
+        write(path, entry[:value].tree, top_level: false)
       end
     end
 
     # Finds first entry that is already in augeas, so it means entry,
     # that is kept or only modified
-    def find_first_valid(data)
+    def find_first_surviving(data)
       data.find { |e| [:keep, :modify].include?(e[:operation]) }
     end
 
@@ -149,7 +171,7 @@ module CFA
 
       msg = aug.get("/augeas/text/store/error/message")
       location = aug.get("/augeas/text/store/error/lens")
-      raise "Augeas parsing/serializing error: #{msg} at #{location}"
+      raise "Augeas serializing error: #{msg} at #{location}"
     end
   end
 end

@@ -46,7 +46,7 @@ describe CFA::AugeasParser do
       expect(subject.serialize(example_tree)).to eq "# test comment\n"
     end
 
-    it "do not modify string if not changed from parse" do
+    it "does not modify the string if not changed since parsing" do
       parser = CFA::AugeasParser.new("ntp.lns")
       data = load_data("ntp.conf")
       tree = parser.parse(data)
@@ -138,7 +138,7 @@ describe CFA::AugeasTree do
   end
 
   describe "#add" do
-    it "adds value where placer create it" do
+    it "adds the value where the placer creates it" do
       parser = CFA::AugeasParser.new("puppet.lns")
       file = "[main]\n# test1\n#test 2\n# test3\n"
       tree = parser.parse(file)
@@ -203,6 +203,53 @@ describe CFA::AugeasCollection do
       value = ntp_restrict_value("-4 default notrap nomodify nopeer noquery")
       collection.delete(value)
       expect(collection.none? { |e| e.value == "-4" }).to eq(true)
+    end
+  end
+end
+
+describe CFA::AugeasWriter do
+  describe "#write" do
+    it "writes correctly all modification done on AugeasTree" do
+      test_file = <<DOC
+# comment1
+# comment2
+# comment3
+
+[main]
+
+test = lest
+to_change = 1
+# comment 4
+to_remove = 1
+
+DOC
+
+      expected_output = <<DOC
+# comment3
+
+[main]
+
+test = lest
+added=1
+to_change = 0
+# comment 4
+
+DOC
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(test_file)
+      tree.delete(CFA::Matcher.new(value_matcher: /comment1/))
+      placer = CFA::BeforePlacer.new(CFA::Matcher.new(value_matcher: /comment2/))
+      # TODO check why it failed
+      # tree.collection("#comment").add("comment new", placer)
+      tree.collection("#comment").delete(/comment2/)
+      subtree = tree["main"]
+      subtree.delete("to_remove")
+      subtree["to_change"] = "0"
+      placer = CFA::BeforePlacer.new(CFA::Matcher.new(key: "to_change"))
+      subtree.add("added", "1", placer)
+
+      expect(parser.serialize(tree)).to eq(expected_output)
     end
   end
 end

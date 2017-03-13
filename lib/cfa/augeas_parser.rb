@@ -19,6 +19,15 @@ module CFA
   # A `:value` is either a String, or an {AugeasTree},
   # or an {AugeasTreeValue} (which combines both).
   #
+  # An `:operation` is internal variable holding modification of augeas
+  # structure. It is used for minimal modification of source file. Its
+  # possible values are `:kept` when value is untouched. `:modified`
+  # when `:value` changed, but `:key`is same. `:remove` when it is going
+  # to be removed and `:add` when new element is added.
+  #
+  # An `:orig_key` is internal variable used to hold original key including
+  # its index.
+  #
   # @return [Hash{Symbol => String, AugeasTree}]
   #
   # @todo Unify naming: entry, element
@@ -111,16 +120,9 @@ module CFA
   class AugeasTree
     # Low level access to Augeas structure
     #
-    # An ordered mapping, represented by an Array of Hashes
-    # with the keys :key, :value, :operation and :orig_key.
+    # An ordered mapping, represented by an Array of AugeasElement.
     #
-    # - `:key` is modified key without index used by collection
-    # - `:value` is string value or instance of AugeasTree or AugeasTreeValue
-    # - `:operation` is internal variable holding modification of augeas
-    #   structure. It is used for minimal modification of source file.
-    # - `:orig_key` is internal variable used to hold key with index
-    #
-    # @param filtered [true, false] if true, elements with remove operation are
+    # @param filtered [true, false] if true, elements with `:remove` operation are
     #   filtered from output
     #
     # @see AugeasElement
@@ -183,6 +185,7 @@ module CFA
 
     # Replace the first value for *key* with *value*.
     # Append a new element if *key* did not exist.
+    # If key was previously removed, then get it back to old position.
     # @param key [String]
     # @param value [String, AugeasTree, AugeasTreeValue]
     def []=(key, value)
