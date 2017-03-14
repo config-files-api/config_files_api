@@ -1,6 +1,7 @@
 require_relative "spec_helper"
 
 require "cfa/augeas_parser"
+require "cfa/augeas_parser/writer"
 require "cfa/matcher"
 require "cfa/placer"
 
@@ -218,10 +219,11 @@ describe CFA::AugeasWriter do
 [main]
 
 test = lest
-to_change = 1
+to_change = 1 # append comment
 # comment 4
 to_remove = 1
-
+modified_trailing = 1 # traling to remove
+space_for_trailing =1
 DOC
 
       expected_output = <<DOC
@@ -232,12 +234,14 @@ DOC
 
 test = lest
 added=1
-to_change = 0
+to_change = 0 # append comment
 # comment 4
-
+modified_trailing = 1
+space_for_trailing =1#new trailing comment
 [main2]
 #new section
 new_section=1
+trailing_comment=1#new trailing comment
 DOC
 
       parser = CFA::AugeasParser.new("puppet.lns")
@@ -249,9 +253,14 @@ DOC
       tree.collection("#comment").delete(/comment2/)
       subtree = tree["main"]
       subtree.delete("to_remove")
-      subtree["to_change"] = "0"
+      subtree["to_change"].value = "0"
       placer = CFA::BeforePlacer.new(CFA::Matcher.new(key: "to_change"))
       subtree.add("added", "1", placer)
+      subtree["modified_trailing"] = "1"
+      subtree3 = CFA::AugeasTree.new
+      subtree3["#comment"] = "new trailing comment"
+      tree_value = CFA::AugeasTreeValue.new(subtree3, "1")
+      subtree["space_for_trailing"] = tree_value
 
       # test also adding whole subtree
       subtree2 = CFA::AugeasTree.new
@@ -259,6 +268,10 @@ DOC
       comments.add("new section")
       subtree2["new_section"] = "1"
       tree.add("main2", subtree2)
+      subtree3 = CFA::AugeasTree.new
+      subtree3["#comment"] = "new trailing comment"
+      tree_value = CFA::AugeasTreeValue.new(subtree3, "1")
+      subtree2["trailing_comment"] = tree_value
 
       expect(parser.serialize(tree)).to eq(expected_output)
     end

@@ -2,9 +2,6 @@ require "augeas"
 require "forwardable"
 require "cfa/placer"
 
-require "cfa/augeas_parser/keys_cache"
-require "cfa/augeas_parser/writer"
-
 module CFA
   # A building block for {AugeasTree}.
   #
@@ -91,13 +88,14 @@ module CFA
   # For easier traversal it forwards `#[]` to the subtree.
   class AugeasTreeValue
     # @return [String] the value in the node
-    attr_accessor :value
+    attr_reader :value
     # @return [AugeasTree] the subtree below the node
     attr_accessor :tree
 
     def initialize(tree, value)
       @tree = tree
       @value = value
+      @modified = false
     end
 
     # (see AugeasTree#[])
@@ -105,10 +103,20 @@ module CFA
       tree[key]
     end
 
+    def value=(value)
+      @value = value
+      @modified = true
+    end
+
     def ==(other)
       [:class, :value, :tree].all? do |a|
         public_send(a) == other.public_send(a)
       end
+    end
+
+    # returns true if value is modified
+    def modified?
+      @modified
     end
 
     # For objects of class Object, eql? is synonymous with ==:
@@ -188,38 +196,15 @@ module CFA
     # @param key [String]
     # @param value [String, AugeasTree, AugeasTreeValue]
     def []=(key, value)
-      entry = @data.find { |d| d[:key] == key }
-      new_entry = entry ? entry : {}
+      new_entry = entry_to_modify(key, value)
       new_entry[:key] = key
       new_entry[:value] = value
-      new_entry[:operation] = entry ? :modify : :add
-      @data << new_entry unless entry
     end
 
     # @param matcher [Matcher]
     # @return [Array<AugeasElement>] matching elements
     def select(matcher)
       @data.select(&matcher)
-    end
-
-    # @note for internal usage only
-    # @api private
-    #
-    # Initializes {#data} from *prefix* in *aug*.
-    # @param aug [::Augeas]
-    # @param prefix [String] Augeas path prefix
-    # @param keys_cache [AugeasKeysCache]
-    # @return [void]
-    def load_from_augeas(aug, prefix, keys_cache)
-      @data = keys_cache.keys_for_prefix(prefix).map do |key|
-        aug_key = prefix + "/" + key
-        {
-          key:       load_key(prefix, aug_key),
-          value:     load_value(aug, aug_key, keys_cache),
-          orig_key:  stripped_path(prefix, aug_key),
-          operation: :keep
-        }
-      end
     end
 
     def ==(other)
@@ -239,29 +224,44 @@ module CFA
 
   private
 
-    def load_key(prefix, aug_key)
-      # clean from key prefix and for collection remove number inside []
-      # +1 for size due to ending '/' not part of prefix
-      key = stripped_path(prefix, aug_key)
-      key.end_with?("]") ? key.sub(/\[\d+\]$/, "[]") : key
-    end
-
-    def stripped_path(prefix, aug_key)
-      aug_key[(prefix.size + 1)..-1]
-    end
-
-    def load_value(aug, aug_key, keys_cache)
-      subkeys = keys_cache.keys_for_prefix(aug_key)
-
-      nested = !subkeys.empty?
-      value = aug.get(aug_key)
-      if nested
-        subtree = AugeasTree.new
-        subtree.load_from_augeas(aug, aug_key, keys_cache)
-        value ? AugeasTreeValue.new(subtree, value) : subtree
+    def replace_entry(old_entry)
+      index = @data.index(old_entry)
+      new_entry = { operation: :add }
+      # insert replacement to same location
+      @data.insert(index, new_entry)
+      # entry is not yet in tree
+      if old_entry[:operation] == :add
+        @data.delete_if { |d| d[:key] == key }
       else
-        value
+        old_entry[:operation] = :remove
       end
+
+      new_entry
+    end
+
+    def mark_new_entry(new_entry, old_entry)
+      # if entry already exist, then just modify, but only if we
+      # previously does not add it
+      new_entry[:operation] = if old_entry && old_entry[:operation] != :add
+                                :modify
+                              else
+                                :add
+                              end
+    end
+
+    def entry_to_modify(key, value)
+      entry = @data.find { |d| d[:key] == key }
+      # we are switching from tree to value or treevalue to value only
+      # like change from key=value to key=value#comment
+      if entry && entry[:value].class != value.class
+        entry = replace_entry(entry)
+      end
+      new_entry = entry || {}
+      mark_new_entry(new_entry, entry)
+
+      @data << new_entry unless entry
+
+      new_entry
     end
   end
 
@@ -283,6 +283,7 @@ module CFA
     # @param raw_string [String] a string to be parsed
     # @return [AugeasTree] the parsed data
     def parse(raw_string)
+      require "cfa/augeas_parser/reader"
       @old_content = raw_string
 
       # open augeas without any autoloading and it should not touch disk and
@@ -292,18 +293,14 @@ module CFA
         aug.set("/input", raw_string)
         report_error(aug) unless aug.text_store(@lens, "/input", "/store")
 
-        keys_cache = AugeasKeysCache.new(aug)
-
-        tree = AugeasTree.new
-        tree.load_from_augeas(aug, "/store", keys_cache)
-
-        return tree
+        return AugeasReader.read(aug, "/store")
       end
     end
 
     # @param data [AugeasTree] the data to be serialized
     # @return [String] a string to be written
     def serialize(data)
+      require "cfa/augeas_parser/writer"
       # open augeas without any autoloading and it should not touch disk and
       # load lenses as needed only
       root = load_path = nil

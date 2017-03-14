@@ -35,6 +35,7 @@ module CFA
         @tree = tree
         @entry = entry
         @prefix = prefix
+        detect_tree_value_modification
       end
 
       def orig_key
@@ -97,6 +98,16 @@ module CFA
       end
 
     private
+
+      # for AugeasTreeValue we have a problem with detection of
+      # value modification as it is enclosed in diferent object.
+      # So propagate it to entry here.
+      def detect_tree_value_modification
+        return unless entry[:value].is_a?(AugeasTreeValue)
+        return if entry[:operation] != :keep
+
+        entry[:operation] = entry[:value].modified? ? :modify : :keep
+      end
 
       # gets subtree preceding entry
       def preceding_tree
@@ -178,7 +189,12 @@ module CFA
       # @param value [LocatedEntry] entry to write
       def set_new_value(path, located_entry)
         aug.set(path, located_entry.entry_value)
-        add_subtree(located_entry.entry_tree, path)
+        prefix = path[/(^.*)\/[^\/]+/, 1]
+        # we need to get new path as set can look like [last() + 1]
+        # which creates new entry and we do not want to add subtree to new
+        # entries
+        new_path = aug.match(prefix + "/*[last()]").first
+        add_subtree(located_entry.entry_tree, new_path)
       end
 
       # Adds new subtree. Simplified version of common write as it is known
@@ -258,6 +274,7 @@ module CFA
     # @param entry [AugeasElement] entry to write
     def modify_entry(located_entry)
       value = located_entry.entry_value
+      aug.set(located_entry.path, value)
       report_error { aug.set(located_entry.path, value) }
       recurse_write(located_entry)
     end
