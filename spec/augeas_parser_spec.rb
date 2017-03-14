@@ -225,6 +225,7 @@ to_remove = 1
 DOC
 
       expected_output = <<DOC
+# comment new
 # comment3
 
 [main]
@@ -234,20 +235,29 @@ added=1
 to_change = 0
 # comment 4
 
+[main2]
+#new section
+new_section=1
 DOC
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(test_file)
       tree.delete(CFA::Matcher.new(value_matcher: /comment1/))
       placer = CFA::BeforePlacer.new(CFA::Matcher.new(value_matcher: /comment2/))
-      # TODO check why it failed
-      # tree.collection("#comment").add("comment new", placer)
+      tree.collection("#comment").add("comment new", placer)
       tree.collection("#comment").delete(/comment2/)
       subtree = tree["main"]
       subtree.delete("to_remove")
       subtree["to_change"] = "0"
       placer = CFA::BeforePlacer.new(CFA::Matcher.new(key: "to_change"))
       subtree.add("added", "1", placer)
+
+      # test also adding whole subtree
+      subtree2 = CFA::AugeasTree.new
+      comments = subtree2.collection("#comment")
+      comments.add("new section")
+      subtree2["new_section"] = "1"
+      tree.add("main2", subtree2)
 
       expect(parser.serialize(tree)).to eq(expected_output)
     end
