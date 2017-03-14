@@ -16,7 +16,7 @@ module CFA
     def write(prefix, tree, top_level: true)
       reset_lazy_operations if top_level
       last_valid_entry_path = nil
-      tree.data(filtered: false).each do |entry|
+      tree.all_data.each do |entry|
         key, path = key_and_path(tree, entry, prefix)
         process_operation(tree, entry, last_valid_entry_path, key, path, prefix)
         last_valid_entry_path = path if entry[:operation] != :remove
@@ -32,7 +32,7 @@ module CFA
     # @param tree [CFA::AugeasTree] tree where collection is defined
     # @param key [String] collection name
     def new_array_number(tree, key)
-      all_elements = tree.data(filtered: false)
+      all_elements = tree.all_data
                          .select { |e| e[:key] == key }
       nums = all_elements.map do |entry|
         entry[:orig_key] ? entry[:orig_key][/^.*\[(\d+)\]$/, 1].to_i : 0
@@ -111,7 +111,7 @@ module CFA
     end
 
     def add_subtree(tree, prefix)
-      tree.data(filtered: false).each do |entry|
+      tree.all_data.each do |entry|
         key = entry[:key]
         key = key[0..-3] if key.end_with?("[]")
         # universal path that handle also new elements for arrays
@@ -131,19 +131,19 @@ module CFA
     # @param tree [CFA::AugeasTree] tree where is key located
     def insert_entry(tree, index, prefix)
       # entries with add not exist yet
-      last_existing = tree.data(filtered: false)[0..(index - 1)].rindex { |e| e[:operation] != :add }
-      entry = tree.data(filtered: false)[index]
+      last_existing = tree.all_data[0..(index - 1)].rindex { |e| e[:operation] != :add }
+      entry = tree.all_data[index]
       key = entry[:key]
       key = key[0..-3] if key.end_with?("[]")
       if last_existing
-        last_path = prefix + "/" + tree.data(filtered: false)[last_existing][:orig_key]
+        last_path = prefix + "/" + tree.all_data[last_existing][:orig_key]
         aug.insert(last_path, key, false)
         paths = aug.match(prefix + "/*")
         paths_index = paths.index(last_path) + 1
         return paths[paths_index]
       else
         # entries with remove is already removed, otherwise find previously
-        any_surviving = tree.data(filtered: false)[(index+1)..-1].any? { |e| e[:operation] != :remove }
+        any_surviving = tree.all_data[(index+1)..-1].any? { |e| e[:operation] != :remove }
         if any_surviving
           aug.insert(prefix+"/*[1]", key, true)
           return aug.match(prefix + "/*[1]")
@@ -166,7 +166,7 @@ module CFA
       last_valid_entry_path, key, path, prefix)
       case entry[:operation]
       when :add, nil # add is default operation
-        lazy_add(tree, entry[:value], tree.data(filtered: false).index(entry), prefix)
+        lazy_add(tree, entry[:value], tree.all_data.index(entry), prefix)
       when :remove then lazy_remove(path)
       when :modify then set_entry(path, entry)
       when :keep then recurse_write(path, entry)

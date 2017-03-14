@@ -21,7 +21,7 @@ module CFA
   #
   # An `:operation` is internal variable holding modification of augeas
   # structure. It is used for minimal modification of source file. Its
-  # possible values are `:kept` when value is untouched. `:modified`
+  # possible values are `:keep` when value is untouched. `:modify`
   # when `:value` changed, but `:key`is same. `:remove` when it is going
   # to be removed and `:add` when new element is added.
   #
@@ -120,21 +120,20 @@ module CFA
   class AugeasTree
     # Low level access to Augeas structure
     #
-    # An ordered mapping, represented by an Array of AugeasElement.
-    #
-    # @param filtered [true, false] if true, elements with `:remove` operation are
-    #   filtered from output
+    # An ordered mapping, represented by an Array of AugeasElement, but without
+    # any removed elements.
     #
     # @see AugeasElement
     #
-    # @return [Array<Hash{Symbol => Object}>] if filtered array is returned it
-    #   is frozen, as modifications do not make sense there
-    def data(filtered: true)
-      if filtered
-        @data.select { |e| e[:operation] != :remove }.freeze
-      else
-        @data
-      end
+    # @return [Array<Hash{Symbol => Object}>] frozen array as it is just copy
+    # of real data
+    def data
+      @data.select { |e| e[:operation] != :remove }.freeze
+    end
+
+    # low level access to all AugeasElement including ones marked for removal
+    def all_data
+      @data
     end
 
     def initialize

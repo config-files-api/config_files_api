@@ -24,7 +24,7 @@ module CFA
     # (see Placer#new_element)
     def new_element(tree)
       res = create_element
-      tree.data(filtered: false) << res
+      tree.all_data << res
 
       res
     end
@@ -43,13 +43,13 @@ module CFA
 
     # (see Placer#new_element)
     def new_element(tree)
-      index = tree.data(filtered: false).index(&@matcher)
+      index = tree.all_data.index(&@matcher)
 
       res = create_element
       if index
-        tree.data(filtered: false).insert(index, res)
+        tree.all_data.insert(index, res)
       else
-        tree.data(filtered: false) << res
+        tree.all_data << res
       end
 
       res
@@ -68,13 +68,13 @@ module CFA
 
     # (see Placer#new_element)
     def new_element(tree)
-      index = tree.data(filtered: false).index(&@matcher)
+      index = tree.all_data.index(&@matcher)
 
       res = create_element
       if index
-        tree.data(filtered: false).insert(index + 1, res)
+        tree.all_data.insert(index + 1, res)
       else
-        tree.data(filtered: false) << res
+        tree.all_data << res
       end
 
       res
@@ -94,16 +94,16 @@ module CFA
 
     # (see Placer#new_element)
     def new_element(tree)
-      index = tree.data(filtered: false).index(&@matcher)
+      index = tree.all_data.index(&@matcher)
       res = create_element
 
       if index
         # remove old one and add new one, as it can have different key
         # which cause problem to simple modify
-        tree.data(filtered: false)[index][:operation] = :remove
-        tree.data(filtered: false).insert(index + 1, res)
+        tree.all_data[index][:operation] = :remove
+        tree.all_data.insert(index + 1, res)
       else
-        tree.data(filtered: false) << res
+        tree.all_data << res
       end
 
       res
