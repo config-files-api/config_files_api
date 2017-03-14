@@ -14,145 +14,225 @@ module CFA
     # @param prefix [String] where to write tree in augeas
     # @param tree [CFA::AugeasTree] tree to write
     def write(prefix, tree, top_level: true)
-      reset_lazy_operations if top_level
-      last_valid_entry_path = nil
+      @lazy_operations = LazyOperations.new(aug) if top_level
       tree.all_data.each do |entry|
-        key, path = key_and_path(tree, entry, prefix)
-        process_operation(tree, entry, last_valid_entry_path, key, path, prefix)
-        last_valid_entry_path = path if entry[:operation] != :remove
+        located_entry = LocatedEntry.new(tree, entry, prefix)
+        process_operation(located_entry)
       end
-      do_lazy_operations if top_level
+      @lazy_operations.run if top_level
     end
 
   private
 
-    attr_reader :aug
+    # AugeasEntry togethere with information about its location and few
+    # helper methods to detect siblings.
+    class LocatedEntry
+      attr_reader :prefix
+      attr_reader :entry
+      attr_reader :tree
 
-    # returns available number for given collection that can be used to write
-    # @param tree [CFA::AugeasTree] tree where collection is defined
-    # @param key [String] collection name
-    def new_array_number(tree, key)
-      all_elements = tree.all_data
-                         .select { |e| e[:key] == key }
-      nums = all_elements.map do |entry|
-        entry[:orig_key] ? entry[:orig_key][/^.*\[(\d+)\]$/, 1].to_i : 0
+      def initialize(tree, entry, prefix)
+        @tree = tree
+        @entry = entry
+        @prefix = prefix
       end
-      nums.max ? (nums.max + 1) : 1
-    end
 
-    # construct augeas key and whole path where to write for collection
-    def key_and_path_array(tree, entry, prefix)
-      if entry[:orig_key]
-        key = entry[:orig_key]
-      else
-        strip_key = entry[:key]
-        key = strip_key[0..-2] + new_array_number(tree, strip_key).to_s + "]"
+      def orig_key
+        entry[:orig_key]
       end
-      path = prefix + "/" + key
-      [key, path]
-    end
 
-    # construct augeas key and whole path where to write
-    def key_and_path(tree, entry, prefix)
-      if entry[:key].end_with?("[]")
-        key_and_path_array(tree, entry, prefix)
-      else
-        [entry[:key], prefix + "/" + entry[:key]]
+      def path
+        return @path if @path
+        return nil unless orig_key
+
+        @path = @prefix + "/" + orig_key
       end
-    end
 
+      def key
+        return @key if @key
 
-    # do lazy removing. Reason for doing this is collections.
-    # After each aug.rm it is renumbered, which is problem as later it will
-    # remove wrong entry. so we remove it in reverse order, which ignore
-    # numbering.
-    def lazy_remove(path)
-      @lazy_operations << { type: :remove, path: path }
-    end
+        @key = @entry[:key]
+        @key = @key[0..-3] if @key.end_with?("[]")
+        @key
+      end
 
-    # adds also need to be added lazy due to renumbering of elements in array
-    # see https://www.redhat.com/archives/augeas-devel/2017-March/msg00002.html
-    def lazy_add(tree, value, index, prefix)
-      @lazy_operations << { type: :add, tree: tree, value: value, index: index, prefix: prefix }
-    end
+      # @return [LocatedEntry, nil] preceding entry that already exist in augeas
+      # tree or nil if it do not exists.
+      def preceding_existing
+        preceding_entry = preceding_tree.reverse.find do |entry|
+          entry[:operation] != :add
+        end
 
-    # clears list of pathgs to remove
-    def reset_lazy_operations
-      @lazy_operations = []
-    end
+        return nil unless preceding_entry
 
-    # does lazy operations of nodes. For reasons see #lazy_remove and #lazy_add
-    def do_lazy_operations
-      # reverse order is needed, because if there is two consequest operations,
-      # then later one cannot affect earlier one
-      @lazy_operations.reverse.each do |operation|
-        case operation[:type]
-        when :remove then report_error { aug.rm(operation[:path]) }
-        when :add
-          path = insert_entry(operation[:tree], operation[:index], operation[:prefix])
-          set_new_value(path, operation[:value])
-        else
-          raise "Invalid lazy operation #{operation.inspect}"
+        LocatedEntry.new(tree, preceding_entry, prefix)
+      end
+
+      # @return [true, false] returns true if there is in augeas tree any
+      # existing entry
+      def any_following?
+        following_tree.any? { |e| e[:operation] != :remove }
+      end
+
+      # @return[AugeasTree] returns augeas tree nested under entry. If there
+      # is not such tree, it create empty one.
+      def entry_tree
+        value = entry[:value]
+        case value
+        when AugeasTree then value
+        when AugeasTreeValue then value.tree
+        else AugeasTree.new
         end
       end
-    end
 
-    def set_new_value(path, value)
-      case value
-      when AugeasTree
-        aug.touch(path)
-        add_subtree(value, path)
-      when AugeasTreeValue
-        report_error { aug.set(path, value.value) }
-        add_subtree(value.tree, path)
-      else
-        report_error { aug.set(path, value) }
+      # @return [String, nil] return augeas value of entry. Can be nil.
+      # If entry value is AugeasTree, then return nil.
+      def entry_value
+        value = entry[:value]
+        case value
+        when AugeasTree then nil
+        when AugeasTreeValue then value.value
+        else value
+        end
+      end
+
+    private
+
+      # gets subtree preceding entry
+      def preceding_tree
+        tree.all_data[0..(index - 1)]
+      end
+
+      # gets subtree following entry
+      def following_tree
+        tree.all_data[(index + 1)..-1]
+      end
+
+      # index of entry in tree
+      def index
+        tree.all_data.index(entry)
       end
     end
 
-    def add_subtree(tree, prefix)
-      tree.all_data.each do |entry|
-        key = entry[:key]
-        key = key[0..-3] if key.end_with?("[]")
-        # universal path that handle also new elements for arrays
-        path = "#{prefix}/#{key}[last()+1]"
-        set_new_value(path, entry[:value])
-      end
-    end
-
-    # It inserts a key at given position without setting its value.
-    # Its logic is to set it after last valid entry. If it is not defined
-    # then try to place it before first valid entry in tree. If there is
-    # no entry in tree, then do not insert position, which means, that
-    # following setting of value appends it to the end.
+    # Represents operation that needs to be done after all modification.
+    # Reason to have this class is that augeas after some operations like
+    # rm or insert renumber array so previous path is no longer valid. For
+    # this reason these sensitive operations that change paths need to be done
+    # at the end and with careful order.
     #
-    # @param last [String] path of last valid entry written to tree
-    # @param key [String] key that need to be inserted
-    # @param tree [CFA::AugeasTree] tree where is key located
-    def insert_entry(tree, index, prefix)
-      # entries with add not exist yet
-      last_existing = tree.all_data[0..(index - 1)].rindex { |e| e[:operation] != :add }
-      entry = tree.all_data[index]
-      key = entry[:key]
-      key = key[0..-3] if key.end_with?("[]")
-      if last_existing
-        last_path = prefix + "/" + tree.all_data[last_existing][:orig_key]
-        aug.insert(last_path, key, false)
-        paths = aug.match(prefix + "/*")
-        paths_index = paths.index(last_path) + 1
-        return paths[paths_index]
-      else
-        # entries with remove is already removed, otherwise find previously
-        any_surviving = tree.all_data[(index+1)..-1].any? { |e| e[:operation] != :remove }
-        if any_surviving
-          aug.insert(prefix+"/*[1]", key, true)
-          return aug.match(prefix + "/*[1]")
-        else
-          return "#{prefix}/#{key}"
+    # @note This class depends on ordered operations. So adding and removing
+    # entries have to be done in order how they are placed in tree.
+    class LazyOperations
+      # @param aug result of Augeas.create
+      def initialize(aug)
+        @aug = aug
+        @operations = []
+      end
+
+      # adds need to be added lazy due to renumbering of elements in array
+      # see https://www.redhat.com/archives/augeas-devel/2017-March/msg00002.html
+      def add(located_entry)
+        @operations << { type: :add, located_entry: located_entry }
+      end
+
+      # do lazy removing. Reason for doing this is collections.
+      # After each aug.rm it is renumbered, which is problem as later it will
+      # remove wrong entry. so we remove it in reverse order, which ignore
+      # numbering.
+      def remove(located_entry)
+        @operations << { type: :remove, path: located_entry.path }
+      end
+
+      # starts all previously inserted operations
+      def run
+        # reverse order is needed, because if there is two consequest
+        # operations, then later one cannot affect earlier one
+        @operations.reverse.each do |operation|
+          case operation[:type]
+          when :remove then aug.rm(operation[:path])
+          when :add
+            located_entry = operation[:located_entry]
+            add_entry(located_entry)
+          else
+            raise "Invalid lazy operation #{operation.inspect}"
+          end
         end
+      end
+
+    private
+
+      attr_reader :aug
+
+      # Adds entry to tree. At first it find where to add it to be in correct
+      # place and then set its value. Recursive if needed. In recursive case
+      # it is already known that whole sub-tree is also new and just added.
+      def add_entry(located_entry)
+        path = insert_entry(located_entry)
+        set_new_value(path, located_entry)
+      end
+
+      # sets new value to given path. It is used for values that are not yet in
+      # augeas tree. If needed it do recursive adding.
+      # @param path [String] path which can contain augeas path expression for
+      #   key of new value
+      # @param value [LocatedEntry] entry to write
+      def set_new_value(path, located_entry)
+        aug.set(path, located_entry.entry_value)
+        add_subtree(located_entry.entry_tree, path)
+      end
+
+      # Adds new subtree. Simplified version of common write as it is known
+      # that all entries will be just added.
+      # @param tree [CFA::AugeasTree] to add
+      # @param prefix [String] prefix where to place tree
+      def add_subtree(tree, prefix)
+        tree.all_data.each do |entry|
+          located_entry = LocatedEntry.new(tree, entry, prefix)
+          # universal path that handle also new elements for arrays
+          path = "#{prefix}/#{located_entry.key}[last()+1]"
+          set_new_value(path, located_entry)
+        end
+      end
+
+      # It inserts a key at given position without setting its value.
+      # Its logic is to set it after last valid entry. If it is not defined
+      # then try to place it before first valid entry in tree. If there is
+      # no entry in tree, then do not insert position, which means, that
+      # following setting of value appends it to the end.
+      #
+      # @param located_entry [LocatedEntry] entry to insert
+      # @return [String] return string to where value should be written. Can
+      #   contain path expressions.
+      #   See https://github.com/hercules-team/augeas/wiki/Path-expressions
+      def insert_entry(located_entry)
+        # entries with add not exist yet
+        preceding = located_entry.preceding_existing
+        if preceding
+          insert_after(preceding, located_entry)
+        # entries with remove is already removed, otherwise find previously
+        elsif located_entry.any_following?
+          aug.insert(prefix + "/*[1]", located_entry.key, true)
+          aug.match(prefix + "/*[1]")
+        else
+          "#{located_entry.prefix}/#{located_entry.key}"
+        end
+      end
+
+      # Insert key after preceding.
+      # @see insert_entry
+      # @param preceding [LocatedEntry] entry after which should be written new
+      #   entry
+      # @param located_entry [LocatedEntry] to insert
+      # @return [String] return string to where value should be written.
+      def insert_after(preceding, located_entry)
+        aug.insert(preceding.path, located_entry.key, false)
+        paths = aug.match(located_entry.prefix + "/*")
+        paths_index = paths.index(preceding.path) + 1
+        paths[paths_index]
       end
     end
 
+    attr_reader :aug
 
     # Do modification according to operation defined in AugeasEntry
     # @param tree [CFA::AugeasTree] tree where entry lives
@@ -162,49 +242,30 @@ module CFA
     # @param key [String] valid augeas key for entry. Important for collections
     #   which have key without its index, but augeas do not allow it.
     # @param path [String] whole path where to write entry in augeas
-    def process_operation(tree, entry,
-      last_valid_entry_path, key, path, prefix)
-      case entry[:operation]
-      when :add, nil # add is default operation
-        lazy_add(tree, entry[:value], tree.all_data.index(entry), prefix)
-      when :remove then lazy_remove(path)
-      when :modify then set_entry(path, entry)
-      when :keep then recurse_write(path, entry)
-      else raise "invalid :operation in #{entry.inspect}"
+    def process_operation(located_entry)
+      case located_entry.entry[:operation]
+      when :add, nil then @lazy_operations.add(located_entry)
+      when :remove then @lazy_operations.remove(located_entry)
+      when :modify then modify_entry(located_entry)
+      when :keep then recurse_write(located_entry)
+      else raise "invalid :operation in #{located_entry.inspect}"
       end
     end
 
-    # writes value of entry to path and if it have sub-tree then call {write} on it
+    # writes value of entry to path and if it have sub-tree then call {write}
+    # on it
     # @param path [String] path where to write
     # @param entry [AugeasElement] entry to write
-    def set_entry(path, entry)
-      value = entry[:value]
-      case value
-      when AugeasTree
-        report_error { aug.touch(path) }
-      when AugeasTreeValue
-        report_error { aug.set(path, value.value) }
-      else
-        report_error { aug.set(path, value) }
-      end
-      recurse_write(path, entry)
+    def modify_entry(located_entry)
+      value = located_entry.entry_value
+      report_error { aug.set(located_entry.path, value) }
+      recurse_write(located_entry)
     end
 
     # calls write on entry if entry have sub-tree
-    # @param path [String] path of entry
-    # @param entry [AugeasElement]
-    def recurse_write(path, entry)
-      if entry[:value].is_a?(AugeasTree)
-        write(path, entry[:value], top_level: false)
-      elsif entry[:value].is_a?(AugeasTreeValue)
-        write(path, entry[:value].tree, top_level: false)
-      end
-    end
-
-    # Finds first entry that is already in augeas, so it means entry,
-    # that is kept or only modified
-    def find_first_surviving(data)
-      data.find { |e| [:keep, :modify].include?(e[:operation]) }
+    # @param located_entry [LocatedEntry] entry to recursive write
+    def recurse_write(located_entry)
+      write(located_entry.path, located_entry.entry_tree, top_level: false)
     end
 
     # Calls block and if it failed, raise exception with details from augeas

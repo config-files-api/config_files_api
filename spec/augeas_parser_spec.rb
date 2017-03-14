@@ -243,7 +243,8 @@ DOC
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(test_file)
       tree.delete(CFA::Matcher.new(value_matcher: /comment1/))
-      placer = CFA::BeforePlacer.new(CFA::Matcher.new(value_matcher: /comment2/))
+      matcher = CFA::Matcher.new(value_matcher: /comment2/)
+      placer = CFA::BeforePlacer.new(matcher)
       tree.collection("#comment").add("comment new", placer)
       tree.collection("#comment").delete(/comment2/)
       subtree = tree["main"]
