@@ -46,5 +46,3 @@ describe CFA::AugeasCollection do
     end
   end
 end
-
-
