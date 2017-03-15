@@ -52,12 +52,11 @@ module CFA
     end
 
     def delete(value)
-      key = augeas_name
-      to_remove = @tree.data.select do |entry|
-        entry[:key] == key && value_match?(entry[:value], value)
-      end
+      to_delete, to_mark = to_remove(value)
+                           .partition { |e| e[:operation] == :add }
+      @tree.all_data.delete_if { |e| to_delete.include?(e) }
 
-      to_remove.each { |e| e[:operation] = :remove }
+      to_mark.each { |e| e[:operation] = :remove }
 
       load_collection
     end
@@ -73,6 +72,14 @@ module CFA
 
     def augeas_name
       @name + "[]"
+    end
+
+    def to_remove(value)
+      key = augeas_name
+
+      @tree.data.select do |entry|
+        entry[:key] == key && value_match?(entry[:value], value)
+      end
     end
 
     def value_match?(value, match)
@@ -160,6 +167,9 @@ module CFA
         matcher = CFA::Matcher.new(key: matcher)
       end
       to_remove = @data.select(&matcher)
+
+      added, to_remove = to_remove.partition { |e| e[:operation] == :add }
+      @data -= added
       to_remove.each { |e| e[:operation] = :remove }
     end
 

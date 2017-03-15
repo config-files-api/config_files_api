@@ -275,5 +275,154 @@ DOC
 
       expect(parser.serialize(tree)).to eq(expected_output)
     end
+
+    it "writes entry which is added and then modified" do
+      input = <<EOF
+[main]
+k = 1
+EOF
+      expected = <<EOF
+[main]
+k = 1
+test=1
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      tree["main"].add("test", "0")
+      tree["main"]["test"] = "1"
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
+
+    it "does not write entry which is added and then removed" do
+      input = <<EOF
+[main]
+k = 1
+# comment1
+# comment2
+EOF
+      expected = <<EOF
+[main]
+k = 1
+# comment1
+# comment2
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      tree["main"].add("test", "0")
+      tree["main"].delete("test")
+      comments = tree["main"].collection("#comment")
+      comments.add("temporary")
+      comments.delete("temporary")
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
+
+    it "removes entry which is modified and then removed" do
+      input = <<EOF
+[main]
+k = 1
+EOF
+      expected = <<EOF
+[main]
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      tree["main"]["k"] = "0"
+      tree["main"].delete("k")
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
+
+    it "modified entry, which is removed and then modified" do
+      input = <<EOF
+[main]
+k = 1
+EOF
+      expected = <<EOF
+[main]
+k = 0
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      tree["main"].delete("k")
+      tree["main"]["k"] = "0"
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
+
+    it "insert properly entry if it is in first position" do
+      input = <<EOF
+[main]
+k = 1
+EOF
+      expected = <<EOF
+[main]
+t=1
+k = 1
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      matcher = CFA::Matcher.new(key: "k")
+      placer = CFA::BeforePlacer.new(matcher)
+      tree["main"].add("t", "1", placer)
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
+
+    it "writes entry if it is new one and others are removed" do
+      input = <<EOF
+[main]
+k = 1
+l = 1
+EOF
+      expected = <<EOF
+[main]
+t=1
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      matcher = CFA::Matcher.new(key: "l")
+      placer = CFA::BeforePlacer.new(matcher)
+      tree["main"].add("t", "1", placer)
+      tree["main"].delete("k")
+      tree["main"].delete("l")
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
+
+    it "writes in correct order several new entries" do
+      input = <<EOF
+[main]
+k = 1
+EOF
+      expected = <<EOF
+[main]
+t=1
+t2=1
+k = 1
+t3=1
+t4=1
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      matcher = CFA::Matcher.new(key: "k")
+      placer = CFA::BeforePlacer.new(matcher)
+      tree["main"].add("t", "1", placer)
+      tree["main"].add("t2", "1", placer)
+      matcher = CFA::Matcher.new(key: "k")
+      placer = CFA::AfterPlacer.new(matcher)
+      tree["main"].add("t4", "1", placer)
+      tree["main"].add("t3", "1", placer)
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
   end
 end

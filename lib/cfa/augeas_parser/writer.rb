@@ -26,6 +26,30 @@ module CFA
 
     # AugeasEntry togethere with information about its location and few
     # helper methods to detect siblings.
+    #
+    # @example data for already existing comment living under /main
+    #   entry.orig_key # => "#comment[15]"
+    #   entry.path # => "/main/#comment[15]"
+    #   entry.key # => "#comment"
+    #   entry.entry_tree # => AugeasTree.new
+    #   entry.entry_value # => "old boring comment"
+    #
+    # @example data for new comment under /main
+    #   # already existing comment living in prefix /main/
+    #   entry.orig_key # => nil
+    #   entry.path # => nil
+    #   entry.key # => "#comment"
+    #   entry.entry_tree # => AugeasTree.new
+    #   entry.entry_value # => "new boring comment"
+    #
+    # @example data for new tree placed at /main
+    #   # already existing comment living in prefix /main/
+    #   entry.orig_key # => "main"
+    #   entry.path # => "/main"
+    #   entry.key # => "main"
+    #   entry.entry_tree # => entry[:value]
+    #   entry.entry_value # => nil
+    #
     class LocatedEntry
       attr_reader :prefix
       attr_reader :entry
@@ -60,7 +84,7 @@ module CFA
       # @return [LocatedEntry, nil] preceding entry that already exist in augeas
       # tree or nil if it do not exists.
       def preceding_existing
-        preceding_entry = preceding_tree.reverse.find do |entry|
+        preceding_entry = preceding_entries.reverse_each.find do |entry|
           entry[:operation] != :add
         end
 
@@ -72,7 +96,7 @@ module CFA
       # @return [true, false] returns true if there is in augeas tree any
       # existing entry
       def any_following?
-        following_tree.any? { |e| e[:operation] != :remove }
+        following_entries.any? { |e| e[:operation] != :remove }
       end
 
       # @return[AugeasTree] returns augeas tree nested under entry. If there
@@ -110,18 +134,19 @@ module CFA
       end
 
       # gets subtree preceding entry
-      def preceding_tree
+      def preceding_entries
+        return [] if index == 0 # first entry
         tree.all_data[0..(index - 1)]
       end
 
       # gets subtree following entry
-      def following_tree
+      def following_entries
         tree.all_data[(index + 1)..-1]
       end
 
       # index of entry in tree
       def index
-        tree.all_data.index(entry)
+        @index ||= tree.all_data.index(entry)
       end
     end
 
@@ -158,7 +183,7 @@ module CFA
       def run
         # reverse order is needed, because if there is two consequest
         # operations, then later one cannot affect earlier one
-        @operations.reverse.each do |operation|
+        @operations.reverse_each do |operation|
           case operation[:type]
           when :remove then aug.rm(operation[:path])
           when :add
@@ -187,6 +212,7 @@ module CFA
       # @param path [String] path which can contain augeas path expression for
       #   key of new value
       # @param value [LocatedEntry] entry to write
+      # @see https://github.com/hercules-team/augeas/wiki/Path-expressions
       def set_new_value(path, located_entry)
         aug.set(path, located_entry.entry_value)
         prefix = path[/(^.*)\/[^\/]+/, 1]
@@ -223,14 +249,15 @@ module CFA
       def insert_entry(located_entry)
         # entries with add not exist yet
         preceding = located_entry.preceding_existing
+        prefix = located_entry.prefix
         if preceding
           insert_after(preceding, located_entry)
         # entries with remove is already removed, otherwise find previously
         elsif located_entry.any_following?
           aug.insert(prefix + "/*[1]", located_entry.key, true)
-          aug.match(prefix + "/*[1]")
+          aug.match(prefix + "/*[1]").first
         else
-          "#{located_entry.prefix}/#{located_entry.key}"
+          "#{prefix}/#{located_entry.key}"
         end
       end
 
