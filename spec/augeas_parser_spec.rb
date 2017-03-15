@@ -343,7 +343,6 @@ EOF
 k1 = 1
 EOF
       expected = <<EOF
-# comment
 [main]
 k1 = 0
 EOF
