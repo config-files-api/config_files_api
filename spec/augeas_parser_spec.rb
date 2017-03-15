@@ -294,21 +294,19 @@ to_remove = 1
 EOS
       end
 
-      # WTF, it puts it at the end
-      xit "inserts an item at the 1st position" do
+      it "inserts an item at the 1st position" do
         placer = CFA::BeforePlacer.new(CFA::Matcher.new(key: "to_change"))
         subtree.add("inserted", "1", placer)
         expect(output_text).to eq <<EOS
 [main]
-inserted = 1
+inserted=1
 to_change = 1 # trailing comment
 # comment 4
 to_remove = 1
 EOS
       end
 
-      # WTF, it puts it at the end
-      xit "removes the tree of an AugeasTreeValue" do
+      it "removes the tree of an AugeasTreeValue" do
         subtree["to_change"] = "0"
         expect(output_text).to eq <<EOS
 [main]
