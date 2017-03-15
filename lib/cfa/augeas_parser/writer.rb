@@ -135,7 +135,7 @@ module CFA
 
       # gets subtree preceding entry
       def preceding_entries
-        return [] if index == 0 # first entry
+        return [] if index.zero? # first entry
         tree.all_data[0..(index - 1)]
       end
 

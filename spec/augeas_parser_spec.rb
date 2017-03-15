@@ -278,10 +278,12 @@ DOC
 
     it "writes entry which is added and then modified" do
       input = <<EOF
+# comment
 [main]
 k = 1
 EOF
       expected = <<EOF
+# comment
 [main]
 k = 1
 test=1
@@ -297,12 +299,14 @@ EOF
 
     it "does not write entry which is added and then removed" do
       input = <<EOF
+# comment
 [main]
 k = 1
 # comment1
 # comment2
 EOF
       expected = <<EOF
+# comment
 [main]
 k = 1
 # comment1
@@ -322,10 +326,12 @@ EOF
 
     it "removes entry which is modified and then removed" do
       input = <<EOF
+# comment
 [main]
 k = 1
 EOF
       expected = <<EOF
+# comment
 [main]
 EOF
 
@@ -339,10 +345,12 @@ EOF
 
     it "modified entry, which is removed and then modified" do
       input = <<EOF
+# comment
 [main]
 k = 1
 EOF
       expected = <<EOF
+# comment
 [main]
 k = 0
 EOF
@@ -357,10 +365,12 @@ EOF
 
     it "insert properly entry if it is in first position" do
       input = <<EOF
+# comment
 [main]
 k = 1
 EOF
       expected = <<EOF
+# comment
 [main]
 t=1
 k = 1
@@ -377,11 +387,13 @@ EOF
 
     it "writes entry if it is new one and others are removed" do
       input = <<EOF
+# comment
 [main]
 k = 1
 l = 1
 EOF
       expected = <<EOF
+# comment
 [main]
 t=1
 EOF
@@ -399,10 +411,12 @@ EOF
 
     it "writes in correct order several new entries" do
       input = <<EOF
+# comment
 [main]
 k = 1
 EOF
       expected = <<EOF
+# comment
 [main]
 t=1
 t2=1
