@@ -168,9 +168,9 @@ module CFA
       end
       to_remove = @data.select(&matcher)
 
-      added, to_remove = to_remove.partition { |e| e[:operation] == :add }
-      @data -= added
-      to_remove.each { |e| e[:operation] = :remove }
+      to_delete, to_mark = to_remove.partition { |e| e[:operation] == :add }
+      @data -= to_delete
+      to_mark.each { |e| e[:operation] = :remove }
     end
 
     # Adds the given *value* for *key* in the tree.
