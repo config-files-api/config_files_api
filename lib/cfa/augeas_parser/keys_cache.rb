@@ -1,15 +1,15 @@
 module CFA
-  # Cache that holds all avaiable keys in augeas tree. It is used to
-  # prevent too many aug.match calls which are expensive.
+  # A cache that holds all avaiable keys in an Augeas tree. It is used to
+  # prevent too many `aug.match` calls which are expensive.
   class AugeasKeysCache
-    # initialize cache from passed augeas object
+    # initialize cache from passed Augeas object
     # @param aug [::Augeas]
     # @param prefix [String] Augeas path for which cache should be created
     def initialize(aug, prefix)
       fill_cache(aug, prefix)
     end
 
-    # returns list of keys available on given prefix
+    # @return list of keys available on given prefix
     def keys_for_prefix(prefix)
       @cache[prefix] || []
     end

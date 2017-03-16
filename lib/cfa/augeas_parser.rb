@@ -16,14 +16,16 @@ module CFA
   # A `:value` is either a String, or an {AugeasTree},
   # or an {AugeasTreeValue} (which combines both).
   #
-  # An `:operation` is internal variable holding modification of augeas
-  # structure. It is used for minimal modification of source file. Its
-  # possible values are `:keep` when value is untouched. `:modify`
-  # when `:value` changed, but `:key`is same. `:remove` when it is going
-  # to be removed and `:add` when new element is added.
+  # An `:operation` is an internal variable holding modification of Augeas
+  # structure. It is used for minimizing modifications of source files. Its
+  # possible values are
+  # - `:keep` when the value is untouched
+  # - `:modify` when the `:value` changed but the `:key` is the same
+  # - `:remove` when it is going to be removed, and
+  # - `:add` when a new element is added.
   #
-  # An `:orig_key` is internal variable used to hold original key including
-  # its index.
+  # An `:orig_key` is an internal variable used to hold the original key
+  # including its index.
   #
   # @return [Hash{Symbol => String, AugeasTree}]
   #
@@ -121,7 +123,7 @@ module CFA
       end
     end
 
-    # returns true if value is modified
+    # @return true if the value has been modified
     def modified?
       @modified
     end
@@ -140,8 +142,8 @@ module CFA
     #
     # @see AugeasElement
     #
-    # @return [Array<Hash{Symbol => Object}>] frozen array as it is just copy
-    # of real data
+    # @return [Array<Hash{Symbol => Object}>] a frozen array as it is
+    #    just a copy of the real data
     def data
       @data.select { |e| e[:operation] != :remove }.freeze
     end
@@ -202,7 +204,7 @@ module CFA
 
     # Replace the first value for *key* with *value*.
     # Append a new element if *key* did not exist.
-    # If key was previously removed, then get it back to old position.
+    # If *key* was previously removed, then put it back to its old position.
     # @param key [String]
     # @param value [String, AugeasTree, AugeasTreeValue]
     def []=(key, value)
@@ -237,9 +239,9 @@ module CFA
     def replace_entry(old_entry)
       index = @data.index(old_entry)
       new_entry = { operation: :add }
-      # insert replacement to same location
+      # insert the replacement to the same location
       @data.insert(index, new_entry)
-      # entry is not yet in tree
+      # the entry is not yet in the tree
       if old_entry[:operation] == :add
         @data.delete_if { |d| d[:key] == key }
       else
@@ -250,8 +252,8 @@ module CFA
     end
 
     def mark_new_entry(new_entry, old_entry)
-      # if entry already exist, then just modify, but only if we
-      # previously does not add it
+      # if an entry already exists then just modify it,
+      # but only if we previously did not add it
       new_entry[:operation] = if old_entry && old_entry[:operation] != :add
                                 :modify
                               else

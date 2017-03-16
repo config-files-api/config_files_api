@@ -10,8 +10,8 @@ module CFA
       @aug = aug
     end
 
-    # write to augeas data in tree to given prefix
-    # @param prefix [String] where to write tree in augeas
+    # Writes the data in *tree* to a given *prefix* in Augeas
+    # @param prefix [String] where to write *tree* in Augeas
     # @param tree [CFA::AugeasTree] tree to write
     def write(prefix, tree, top_level: true)
       @lazy_operations = LazyOperations.new(aug) if top_level
@@ -27,7 +27,7 @@ module CFA
     # AugeasEntry togethere with information about its location and few
     # helper methods to detect siblings.
     #
-    # @example data for already existing comment living under /main
+    # @example data for an already existing comment living under /main
     #   entry.orig_key # => "#comment[15]"
     #   entry.path # => "/main/#comment[15]"
     #   entry.key # => "#comment"
@@ -81,8 +81,9 @@ module CFA
         @key
       end
 
-      # @return [LocatedEntry, nil] preceding entry that already exist in augeas
-      # tree or nil if it do not exists.
+      # @return [LocatedEntry, nil]
+      #   a preceding entry that already exists in the Augeas tree
+      #   or nil if it does not exist.
       def preceding_existing
         preceding_entry = preceding_entries.reverse_each.find do |entry|
           entry[:operation] != :add
@@ -93,14 +94,14 @@ module CFA
         LocatedEntry.new(tree, preceding_entry, prefix)
       end
 
-      # @return [true, false] returns true if there is in augeas tree any
-      # existing entry
+      # @return [true, false] returns true if there is any following entry
+      #    in the Augeas tree
       def any_following?
         following_entries.any? { |e| e[:operation] != :remove }
       end
 
-      # @return[AugeasTree] returns augeas tree nested under entry. If there
-      # is not such tree, it create empty one.
+      # @return [AugeasTree] the Augeas tree nested under this entry.
+      #   If there is no such tree, it creates an empty one.
       def entry_tree
         value = entry[:value]
         case value
@@ -110,8 +111,8 @@ module CFA
         end
       end
 
-      # @return [String, nil] return augeas value of entry. Can be nil.
-      # If entry value is AugeasTree, then return nil.
+      # @return [String, nil] the Augeas value of this entry. Can be nil.
+      # If the value is an {AugeasTree} then return nil.
       def entry_value
         value = entry[:value]
         case value
@@ -123,9 +124,9 @@ module CFA
 
     private
 
-      # for AugeasTreeValue we have a problem with detection of
-      # value modification as it is enclosed in diferent object.
-      # So propagate it to entry here.
+      # For {AugeasTreeValue} we have a problem with detection of
+      # value modification as it is enclosed in a diferent object.
+      # So propagate it to this entry here.
       def detect_tree_value_modification
         return unless entry[:value].is_a?(AugeasTreeValue)
         return if entry[:operation] != :keep
@@ -144,7 +145,7 @@ module CFA
         tree.all_data[(index + 1)..-1]
       end
 
-      # index of entry in tree
+      # the index of this entry in its tree
       def index
         @index ||= tree.all_data.index(entry)
       end
@@ -226,24 +227,24 @@ module CFA
       # Adds new subtree. Simplified version of common write as it is known
       # that all entries will be just added.
       # @param tree [CFA::AugeasTree] to add
-      # @param prefix [String] prefix where to place tree
+      # @param prefix [String] prefix where to place *tree*
       def add_subtree(tree, prefix)
         tree.all_data.each do |entry|
           located_entry = LocatedEntry.new(tree, entry, prefix)
-          # universal path that handle also new elements for arrays
+          # universal path that handles also new elements for arrays
           path = "#{prefix}/#{located_entry.key}[last()+1]"
           set_new_value(path, located_entry)
         end
       end
 
       # It inserts a key at given position without setting its value.
-      # Its logic is to set it after last valid entry. If it is not defined
-      # then try to place it before first valid entry in tree. If there is
-      # no entry in tree, then do not insert position, which means, that
-      # following setting of value appends it to the end.
+      # Its logic is to set it after the last valid entry. If it is not defined
+      # then tries to place it before the first valid entry in tree. If there is
+      # no entry in tree, then does not insert a position, which means that
+      # subsequent setting of value appends it to the end.
       #
       # @param located_entry [LocatedEntry] entry to insert
-      # @return [String] return string to where value should be written. Can
+      # @return [String] where value should be written. Can
       #   contain path expressions.
       #   See https://github.com/hercules-team/augeas/wiki/Path-expressions
       def insert_entry(located_entry)
@@ -263,10 +264,9 @@ module CFA
 
       # Insert key after preceding.
       # @see insert_entry
-      # @param preceding [LocatedEntry] entry after which should be written new
-      #   entry
-      # @param located_entry [LocatedEntry] to insert
-      # @return [String] return string to where value should be written.
+      # @param preceding [LocatedEntry] entry after which the new one goes
+      # @param located_entry [LocatedEntry] entry to insert
+      # @return [String] where value should be written.
       def insert_after(preceding, located_entry)
         aug.insert(preceding.path, located_entry.key, false)
         paths = aug.match(located_entry.prefix + "/*")

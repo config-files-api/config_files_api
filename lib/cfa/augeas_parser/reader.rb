@@ -2,7 +2,7 @@ require "cfa/augeas_parser/keys_cache"
 require "cfa/augeas_parser"
 
 module CFA
-  # Class responsible for reading AugeasTree from augeas
+  # A class responsible for reading {AugeasTree} from Augeas
   class AugeasReader
     class << self
       # Creates *tree* from *prefix* in *aug*.
@@ -20,7 +20,7 @@ module CFA
 
     private
 
-      # fill tree with data
+      # fills *tree* with data
       def load_tree(aug, prefix, tree, keys_cache)
         data = keys_cache.keys_for_prefix(prefix).map do |key|
           aug_key = prefix + "/" + key
@@ -35,7 +35,7 @@ module CFA
         tree.all_data.concat(data)
       end
 
-      # loads key in format AugeasTree expect it
+      # loads a key in a format that AugeasTree expects
       def load_key(prefix, aug_key)
         # clean from key prefix and for collection remove number inside []
         # +1 for size due to ending '/' not part of prefix
