@@ -1,9 +1,13 @@
 module CFA
-  # Goal of this class is to write back to augeas data stored in {AugeasTree}.
-  # It tries to only required changes, as augeas keeps inside flag if it is
-  # modified and if not modified, then part of file is kept untouched.
+  # The goal of this class is to write the data stored in {AugeasTree}
+  # back to Augeas.
+  #
+  # It tries to make only the needed changes, as internally Augeas keeps
+  # a flag whether data has been modified,
+  # and keeps the unmodified parts of the file untouched.
+  #
   # @note internal only, unstable API
-  # @private
+  # @api private
   class AugeasWriter
     # @param aug result of Augeas.create
     def initialize(aug)
@@ -24,7 +28,7 @@ module CFA
 
   private
 
-    # AugeasEntry togethere with information about its location and few
+    # {AugeasElement} together with information about its location and a few
     # helper methods to detect siblings.
     #
     # @example data for an already existing comment living under /main
@@ -34,8 +38,7 @@ module CFA
     #   entry.entry_tree # => AugeasTree.new
     #   entry.entry_value # => "old boring comment"
     #
-    # @example data for new comment under /main
-    #   # already existing comment living in prefix /main/
+    # @example data for a new comment under /main
     #   entry.orig_key # => nil
     #   entry.path # => nil
     #   entry.key # => "#comment"
@@ -43,7 +46,6 @@ module CFA
     #   entry.entry_value # => "new boring comment"
     #
     # @example data for new tree placed at /main
-    #   # already existing comment living in prefix /main/
     #   entry.orig_key # => "main"
     #   entry.path # => "/main"
     #   entry.key # => "main"
@@ -134,13 +136,13 @@ module CFA
         entry[:operation] = entry[:value].modified? ? :modify : :keep
       end
 
-      # gets subtree preceding entry
+      # the entries preceding this entry
       def preceding_entries
         return [] if index.zero? # first entry
         tree.all_data[0..(index - 1)]
       end
 
-      # gets subtree following entry
+      # the entries following this entry
       def following_entries
         tree.all_data[(index + 1)..-1]
       end
@@ -151,14 +153,16 @@ module CFA
       end
     end
 
-    # Represents operation that needs to be done after all modification.
-    # Reason to have this class is that augeas after some operations like
-    # rm or insert renumber array so previous path is no longer valid. For
-    # this reason these sensitive operations that change paths need to be done
-    # at the end and with careful order.
+    # Represents an operation that needs to be done after all modifications.
+    #
+    # The reason to have this class is that Augeas renumbers its arrays after
+    # some operations like `rm` or `insert` so previous paths are no longer
+    # valid. For this reason these sensitive operations that change paths need
+    # to be done at the end and with careful order.
+    # See https://www.redhat.com/archives/augeas-devel/2017-March/msg00002.html
     #
     # @note This class depends on ordered operations. So adding and removing
-    # entries have to be done in order how they are placed in tree.
+    # entries has to be done in order how they are placed in tree.
     class LazyOperations
       # @param aug result of Augeas.create
       def initialize(aug)
@@ -166,24 +170,18 @@ module CFA
         @operations = []
       end
 
-      # adds need to be added lazy due to renumbering of elements in array
-      # see https://www.redhat.com/archives/augeas-devel/2017-March/msg00002.html
       def add(located_entry)
         @operations << { type: :add, located_entry: located_entry }
       end
 
-      # do lazy removing. Reason for doing this is collections.
-      # After each aug.rm it is renumbered, which is problem as later it will
-      # remove wrong entry. so we remove it in reverse order, which ignore
-      # numbering.
       def remove(located_entry)
         @operations << { type: :remove, path: located_entry.path }
       end
 
       # starts all previously inserted operations
       def run
-        # reverse order is needed, because if there is two consequest
-        # operations, then later one cannot affect earlier one
+        # the reverse order is needed because if there are two operations
+        # one after another then the latter cannot affect the former
         @operations.reverse_each do |operation|
           case operation[:type]
           when :remove then aug.rm(operation[:path])
@@ -200,19 +198,19 @@ module CFA
 
       attr_reader :aug
 
-      # Adds entry to tree. At first it find where to add it to be in correct
-      # place and then set its value. Recursive if needed. In recursive case
+      # Adds entry to tree. At first it finds where to add it to be in correct
+      # place and then sets its value. Recursive if needed. In recursive case
       # it is already known that whole sub-tree is also new and just added.
       def add_entry(located_entry)
         path = insert_entry(located_entry)
         set_new_value(path, located_entry)
       end
 
-      # sets new value to given path. It is used for values that are not yet in
-      # augeas tree. If needed it do recursive adding.
-      # @param path [String] path which can contain augeas path expression for
+      # Sets new value to given path. It is used for values that are not yet in
+      # Augeas tree. If needed it does recursive adding.
+      # @param path [String] path which can contain Augeas path expression for
       #   key of new value
-      # @param value [LocatedEntry] entry to write
+      # @param located_entry [LocatedEntry] entry to write
       # @see https://github.com/hercules-team/augeas/wiki/Path-expressions
       def set_new_value(path, located_entry)
         aug.set(path, located_entry.entry_value)
@@ -277,14 +275,8 @@ module CFA
 
     attr_reader :aug
 
-    # Do modification according to operation defined in AugeasEntry
-    # @param tree [CFA::AugeasTree] tree where entry lives
-    # @param entry [AugeasElement] entry to process
-    # @param last_valid_entry_path [String, nil] path of last valid entry
-    #   written or nil if there is no such entry
-    # @param key [String] valid augeas key for entry. Important for collections
-    #   which have key without its index, but augeas do not allow it.
-    # @param path [String] whole path where to write entry in augeas
+    # Does modification according to the operation defined in {AugeasElement}
+    # @param located_entry [LocatedEntry] entry to process
     def process_operation(located_entry)
       case located_entry.entry[:operation]
       when :add, nil then @lazy_operations.add(located_entry)
@@ -295,10 +287,9 @@ module CFA
       end
     end
 
-    # writes value of entry to path and if it have sub-tree then call {write}
-    # on it
-    # @param path [String] path where to write
-    # @param entry [AugeasElement] entry to write
+    # Writes value of entry to path and if it has a sub-tree
+    # then it calls {#write} on it
+    # @param located_entry [LocatedEntry] entry to modify
     def modify_entry(located_entry)
       value = located_entry.entry_value
       aug.set(located_entry.path, value)

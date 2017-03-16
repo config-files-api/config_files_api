@@ -2,6 +2,7 @@ require "augeas"
 require "forwardable"
 require "cfa/placer"
 
+# CFA: Configuration Files API
 module CFA
   # A building block for {AugeasTree}.
   #
@@ -162,7 +163,7 @@ module CFA
       AugeasCollection.new(self, key)
     end
 
-    # @param [String, Matcher]
+    # @param [String, Matcher] matcher
     def delete(matcher)
       return if matcher.nil?
       unless matcher.is_a?(CFA::Matcher)

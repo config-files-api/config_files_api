@@ -38,13 +38,13 @@ module CFA
       # loads a key in a format that AugeasTree expects
       def load_key(prefix, aug_key)
         # clean from key prefix and for collection remove number inside []
-        # +1 for size due to ending '/' not part of prefix
         key = stripped_path(prefix, aug_key)
         key.end_with?("]") ? key.sub(/\[\d+\]$/, "[]") : key
       end
 
       # path without prefix we are not interested in
       def stripped_path(prefix, aug_key)
+        # +1 for size due to ending '/' not part of prefix
         aug_key[(prefix.size + 1)..-1]
       end
 
