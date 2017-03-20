@@ -11,14 +11,20 @@ module CFA
       raise NotImplementedError,
         "Subclasses of #{Module.nesting.first} must override #{__method__}"
     end
+
+  protected
+
+    def create_element
+      { operation: :add }
+    end
   end
 
   # Places the new element at the end of the tree.
   class AppendPlacer < Placer
     # (see Placer#new_element)
     def new_element(tree)
-      res = {}
-      tree.data << res
+      res = create_element
+      tree.all_data << res
 
       res
     end
@@ -37,14 +43,15 @@ module CFA
 
     # (see Placer#new_element)
     def new_element(tree)
-      index = tree.data.index(&@matcher)
+      index = tree.all_data.index(&@matcher)
 
-      res = {}
+      res = create_element
       if index
-        tree.data.insert(index, res)
+        tree.all_data.insert(index, res)
       else
-        tree.data << res
+        tree.all_data << res
       end
+
       res
     end
   end
@@ -61,14 +68,15 @@ module CFA
 
     # (see Placer#new_element)
     def new_element(tree)
-      index = tree.data.index(&@matcher)
+      index = tree.all_data.index(&@matcher)
 
-      res = {}
+      res = create_element
       if index
-        tree.data.insert(index + 1, res)
+        tree.all_data.insert(index + 1, res)
       else
-        tree.data << res
+        tree.all_data << res
       end
+
       res
     end
   end
@@ -86,13 +94,16 @@ module CFA
 
     # (see Placer#new_element)
     def new_element(tree)
-      index = tree.data.index(&@matcher)
-      res = {}
+      index = tree.all_data.index(&@matcher)
+      res = create_element
 
       if index
-        tree.data[index] = res
+        # remove old one and add new one, as it can have different key
+        # which cause problem to simple modify
+        tree.all_data[index][:operation] = :remove
+        tree.all_data.insert(index + 1, res)
       else
-        tree.data << res
+        tree.all_data << res
       end
 
       res

@@ -1,7 +1,9 @@
 language: ruby
 rvm:
-  - 2.2.3
-  - 2.1.7
+  - 2.4.0
+  - 2.3.3
+  - 2.2.6
+  - 2.1.10
 addons:
   apt:
     packages:
@@ -10,7 +12,7 @@ addons:
 # use trusty travis infrastructure
 sudo: required
 dist: trusty
-install: gem install rubocop rspec ruby-augeas simplecov coveralls
+install: gem install rubocop rspec ruby-augeas coveralls
 script:
     - COVERAGE=1 rake spec
     - rubocop
