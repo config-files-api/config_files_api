@@ -214,11 +214,11 @@ module CFA
       # @see https://github.com/hercules-team/augeas/wiki/Path-expressions
       def set_new_value(path, located_entry)
         aug.set(path, located_entry.entry_value)
-        prefix = path[/(^.*)\/[^\/]+/, 1]
+        prefix = path[/(^.*)\[[^\]]*\]/, 1] || path
         # we need to get new path as set can look like [last() + 1]
         # which creates new entry and we do not want to add subtree to new
         # entries
-        new_path = aug.match(prefix + "/*[last()]").first
+        new_path = aug.match(prefix + "[last()]").first
         add_subtree(located_entry.entry_tree, new_path)
       end
 
