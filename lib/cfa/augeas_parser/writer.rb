@@ -267,9 +267,19 @@ module CFA
       # @return [String] where value should be written.
       def insert_after(preceding, located_entry)
         aug.insert(preceding.path, located_entry.key, false)
-        paths = aug.match(located_entry.prefix + "/*")
-        paths_index = paths.index(preceding.path) + 1
-        paths[paths_index]
+        path_after(preceding)
+      end
+
+      # Finds path immediately after preceding entry
+      # @param preceding [LocatedEntry]
+      def path_after(preceding)
+        paths = aug.match(preceding.prefix + "/*")
+        preceding_index = paths.index(preceding.path)
+        # it can happen, that insertion change previous entry from
+        # e.g. #comment to #comment[1]. Can happen only if it switch from
+        # single entry to collection
+        preceding_index ||= paths.index(preceding.path + "[1]")
+        paths[preceding_index + 1]
       end
     end
 

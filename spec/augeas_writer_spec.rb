@@ -349,5 +349,24 @@ EOF
 
       expect(parser.serialize(tree)).to eq(expected)
     end
+
+    it "writes properly new entry of same key as single entry already there" do
+      input = <<EOF
+[main]
+# test1
+EOF
+
+      expected = <<EOF
+[main]
+# test1
+#test2
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      tree["main"].add("#comment[]", "test2")
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
   end
 end
