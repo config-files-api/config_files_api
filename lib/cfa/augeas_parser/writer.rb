@@ -200,19 +200,26 @@ module CFA
 
       # Removes entry from tree. If path do not exist, then try if it don't
       # change to collection
+      # @param path [String] original path name to remove
       # @example of such collection change
       #   "test" => remove, "lest" => remove, "test" => add
       #   in this case it change after first add
       #   "test[1]" => remove, "lest" => remove, "test[2]" => already added
       #   so in this case try to append [1] to path
       def remove_entry(path)
-	if aug.match(path).size == 1
-	  aug.rm(path)
-	elsif !aug.match(path + "[1]").empty?
-          aug.rm(path + "[1]")
-	else
+        aug.rm(path_to_remove(path))
+      end
+
+      # Finds path to remove, as path can be meanwhile renumbered, see
+      # #remove_entry
+      def path_to_remove(path)
+        if aug.match(path).size == 1
+          path
+        elsif !aug.match(path + "[1]").empty?
+          path + "[1]"
+        else
           raise "Unknown augeas path #{path}"
-	end
+        end
       end
 
       # Adds entry to tree. At first it finds where to add it to be in correct
