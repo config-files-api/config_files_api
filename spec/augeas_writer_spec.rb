@@ -368,5 +368,24 @@ EOF
 
       expect(parser.serialize(tree)).to eq(expected)
     end
+
+    it "writes properly new entry with same key as removed entry" do
+      input = <<EOF
+[main]
+t1 = 1
+EOF
+
+      expected = <<EOF
+[main]
+t1 = 2
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      tree["main"].delete("t1")
+      tree["main"].add("t1", "2")
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
   end
 end

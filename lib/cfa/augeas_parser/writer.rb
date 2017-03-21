@@ -184,7 +184,7 @@ module CFA
         # one after another then the latter cannot affect the former
         @operations.reverse_each do |operation|
           case operation[:type]
-          when :remove then aug.rm(operation[:path])
+          when :remove then remove_entry(operation[:path])
           when :add
             located_entry = operation[:located_entry]
             add_entry(located_entry)
@@ -197,6 +197,23 @@ module CFA
     private
 
       attr_reader :aug
+
+      # Removes entry from tree. If path do not exist, then try if it don't
+      # change to collection
+      # @example of such collection change
+      #   "test" => remove, "lest" => remove, "test" => add
+      #   in this case it change after first add
+      #   "test[1]" => remove, "lest" => remove, "test[2]" => already added
+      #   so in this case try to append [1] to path
+      def remove_entry(path)
+	if aug.match(path).size == 1
+	  aug.rm(path)
+	elsif !aug.match(path + "[1]").empty?
+          aug.rm(path + "[1]")
+	else
+          raise "Unknown augeas path #{path}"
+	end
+      end
 
       # Adds entry to tree. At first it finds where to add it to be in correct
       # place and then sets its value. Recursive if needed. In recursive case
