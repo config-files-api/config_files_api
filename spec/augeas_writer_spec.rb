@@ -323,5 +323,69 @@ EOF
 
       expect(parser.serialize(tree)).to eq(expected)
     end
+
+    it "properly writes two following new trees" do
+      input = <<EOF
+[main]
+t1 = 1
+EOF
+      expected = <<EOF
+[main]
+t1 = 1
+[main2]
+t1=2
+[main3]
+t1=3
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      tree2 = CFA::AugeasTree.new
+      tree2["t1"] = "2"
+      tree3 = CFA::AugeasTree.new
+      tree3["t1"] = "3"
+      tree.add("main2", tree2)
+      tree.add("main3", tree3)
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
+
+    it "writes properly new entry of same key as single entry already there" do
+      input = <<EOF
+[main]
+# test1
+EOF
+
+      expected = <<EOF
+[main]
+# test1
+#test2
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      tree["main"].add("#comment[]", "test2")
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
+
+    it "writes properly new entry with same key as removed entry" do
+      input = <<EOF
+[main]
+t1 = 1
+EOF
+
+      expected = <<EOF
+[main]
+t1 = 2
+EOF
+
+      parser = CFA::AugeasParser.new("puppet.lns")
+      tree = parser.parse(input)
+      tree["main"].delete("t1")
+      tree["main"].add("t1", "2")
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
   end
 end

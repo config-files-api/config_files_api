@@ -184,7 +184,7 @@ module CFA
         # one after another then the latter cannot affect the former
         @operations.reverse_each do |operation|
           case operation[:type]
-          when :remove then aug.rm(operation[:path])
+          when :remove then remove_entry(operation[:path])
           when :add
             located_entry = operation[:located_entry]
             add_entry(located_entry)
@@ -197,6 +197,28 @@ module CFA
     private
 
       attr_reader :aug
+
+      # Removes entry from tree. If *path* does not exist, then tries if it
+      # has changed to a collection:
+      # If we remove and re-add a single key then because of the laziness
+      # Augeas will first see the addition, making a 2 member collection,
+      # so we need to remove "key[1]" instead of "key".
+      # @param path [String] original path name to remove
+      def remove_entry(path)
+        aug.rm(path_to_remove(path))
+      end
+
+      # Finds path to remove, as path can be meanwhile renumbered, see
+      # #remove_entry
+      def path_to_remove(path)
+        if aug.match(path).size == 1
+          path
+        elsif !aug.match(path + "[1]").empty?
+          path + "[1]"
+        else
+          raise "Unknown augeas path #{path}"
+        end
+      end
 
       # Adds entry to tree. At first it finds where to add it to be in correct
       # place and then sets its value. Recursive if needed. In recursive case
@@ -214,11 +236,11 @@ module CFA
       # @see https://github.com/hercules-team/augeas/wiki/Path-expressions
       def set_new_value(path, located_entry)
         aug.set(path, located_entry.entry_value)
-        prefix = path[/(^.*)\/[^\/]+/, 1]
+        prefix = path[/(^.*)\[[^\]]*\]/, 1] || path
         # we need to get new path as set can look like [last() + 1]
         # which creates new entry and we do not want to add subtree to new
         # entries
-        new_path = aug.match(prefix + "/*[last()]").first
+        new_path = aug.match(prefix + "[last()]").first
         add_subtree(located_entry.entry_tree, new_path)
       end
 
@@ -267,9 +289,19 @@ module CFA
       # @return [String] where value should be written.
       def insert_after(preceding, located_entry)
         aug.insert(preceding.path, located_entry.key, false)
-        paths = aug.match(located_entry.prefix + "/*")
-        paths_index = paths.index(preceding.path) + 1
-        paths[paths_index]
+        path_after(preceding)
+      end
+
+      # Finds path immediately after preceding entry
+      # @param preceding [LocatedEntry]
+      def path_after(preceding)
+        paths = aug.match(preceding.prefix + "/*")
+        preceding_index = paths.index(preceding.path)
+        # it can happen, that insertion change previous entry from
+        # e.g. #comment to #comment[1]. Can happen only if it switch from
+        # single entry to collection
+        preceding_index ||= paths.index(preceding.path + "[1]")
+        paths[preceding_index + 1]
       end
     end
 
