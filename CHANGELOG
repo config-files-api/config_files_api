@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Mar 21 08:10:38 UTC 2017 - jreidinger@suse.com
+
+- fix AugeasTree#select to not return elements marked as deleted
+  (caused by fix for bsc#1023204)
+- 0.5.1
+
+-------------------------------------------------------------------
 Thu Mar  2 12:12:00 UTC 2017 - jreidinger@suse.com
 
 - allow generic set/get also on subtree (bsc#1023204)
@@ -8,7 +15,7 @@ Thu Mar  2 12:12:00 UTC 2017 - jreidinger@suse.com
   view of data, which cannot be modified
 - 0.5.0
 
---------------------------------------------------------------------
+-------------------------------------------------------------------
 Mon Dec  5 15:38:36 UTC 2016 - joseivanlopez@gmail.com
 
 - fix regression when passing nil to AugeasTree#delete (bsc#983486)
