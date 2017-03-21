@@ -87,6 +87,21 @@ describe CFA::AugeasTree do
     end
   end
 
+  describe "#select" do
+    it "selects entries according to passed block" do
+      matcher = CFA::Matcher.new(collection: "spec")
+      expect(tree.select(matcher).size).to eq 2
+    end
+
+    it "never returns deleted entries" do
+      collection = tree.collection("spec")
+      collection.delete(collection[0])
+
+      matcher = CFA::Matcher.new(collection: "spec")
+      expect(tree.select(matcher).size).to eq 1
+    end
+  end
+
   describe "#==" do
     let(:example_tree) do
       tree = CFA::AugeasTree.new

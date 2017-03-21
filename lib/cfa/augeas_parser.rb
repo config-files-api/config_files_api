@@ -217,7 +217,7 @@ module CFA
     # @param matcher [Matcher]
     # @return [Array<AugeasElement>] matching elements
     def select(matcher)
-      @data.select(&matcher)
+      data.select(&matcher)
     end
 
     def ==(other)
