@@ -1,3 +1,4 @@
+require "set"
 require "augeas"
 require "forwardable"
 require "cfa/placer"
@@ -156,6 +157,19 @@ module CFA
 
     def initialize
       @data = []
+    end
+
+    # Gets new unique id in numberic sequence. Useful for augeas models that
+    # using sequences like /etc/hosts . It have keys like "1", "2" and when
+    # adding new one it need to find new key.
+    def unique_id
+      # check all_data instead of data, as we have to not reuse deleted key
+      ids = Set.new(all_data.map { |e| e[:key] })
+      id = 1
+      loop do
+        return id.to_s unless ids.include?(id.to_s)
+        id += 1
+      end
     end
 
     # @return [AugeasCollection] collection for *key*

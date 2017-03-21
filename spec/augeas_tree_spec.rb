@@ -102,6 +102,23 @@ describe CFA::AugeasTree do
     end
   end
 
+  describe "#unique_id" do
+    it "returns id that is not yet in tree" do
+      parser = CFA::AugeasParser.new("hosts.lns")
+      file = "127.0.0.1 localhost\n"
+      tree = parser.parse(file)
+      expect(tree.unique_id).to eq "2"
+      tree2 = CFA::AugeasTree.new
+      tree2["ipaddr"] = "127.0.0.2"
+      tree2["canonical"] = "localhost2"
+      tree.add(tree.unique_id, tree2)
+      expect(tree.unique_id).to eq "3"
+      tree.delete("1")
+      # test that it does not return "1" marked for delete
+      expect(tree.unique_id).to eq "3"
+    end
+  end
+
   describe "#==" do
     let(:example_tree) do
       tree = CFA::AugeasTree.new
