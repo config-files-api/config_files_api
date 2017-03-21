@@ -198,14 +198,12 @@ module CFA
 
       attr_reader :aug
 
-      # Removes entry from tree. If path do not exist, then try if it don't
-      # change to collection
+      # Removes entry from tree. If *path* does not exist, then tries if it
+      # has changed to a collection:
+      # If we remove and re-add a single key then because of the laziness
+      # Augeas will first see the addition, making a 2 member collection,
+      # so we need to remove "key[1]" instead of "key".
       # @param path [String] original path name to remove
-      # @example of such collection change
-      #   "test" => remove, "lest" => remove, "test" => add
-      #   in this case it change after first add
-      #   "test[1]" => remove, "lest" => remove, "test[2]" => already added
-      #   so in this case try to append [1] to path
       def remove_entry(path)
         aug.rm(path_to_remove(path))
       end
