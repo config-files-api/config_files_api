@@ -387,5 +387,27 @@ EOF
 
       expect(parser.serialize(tree)).to eq(expected)
     end
+
+    it "writes properly to empty section" do
+      input = <<EOF
+[Time]
+EOF
+
+      expected = <<EOF
+[Time]
+NTP=ntp.org
+EOF
+
+      parser = CFA::AugeasParser.new("systemd.lns")
+      data = parser.parse(input)
+      data["Time"] = ::CFA::AugeasTree.new
+      tree = data["Time"]
+      servers = ::CFA::AugeasTree.new
+      values = servers.collection("value")
+      values.add("ntp.org")
+      tree["NTP"] = servers
+
+      expect(parser.serialize(data)).to eq(expected)
+    end
   end
 end
