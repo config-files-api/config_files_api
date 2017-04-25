@@ -387,5 +387,32 @@ EOF
 
       expect(parser.serialize(tree)).to eq(expected)
     end
+
+    it "writes properly multiple subtrees" do
+      input = <<EOF
+server 0.pool.ntp.org
+server 1.pool.ntp.org
+EOF
+
+      expected = <<EOF
+server 0.pool.ntp.org
+server 1.pool.ntp.org
+server 2.pool.ntp.org iburst dynamic
+server 3.pool.ntp.org iburst
+EOF
+
+      parser = CFA::AugeasParser.new("ntp.lns")
+      tree = parser.parse(input)
+      servers = tree.collection("server")
+      options = CFA::AugeasTree.new
+      options["iburst"] = nil
+      options["dynamic"] = nil
+      servers.add(CFA::AugeasTreeValue.new(options, "2.pool.ntp.org"))
+      options = CFA::AugeasTree.new
+      options["iburst"] = nil
+      servers.add(CFA::AugeasTreeValue.new(options, "3.pool.ntp.org"))
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
   end
 end

@@ -147,7 +147,7 @@ module CFA
     # @return [Array<Hash{Symbol => Object}>] a frozen array as it is
     #    just a copy of the real data
     def data
-      @data.select { |e| e[:operation] != :remove }.freeze
+      @data.reject { |e| e[:operation] == :remove }.freeze
     end
 
     # low level access to all AugeasElement including ones marked for removal
@@ -238,8 +238,10 @@ module CFA
       return false if self.class != other.class
       other_data = other.data # do not compute again
       data.each_with_index do |entry, index|
-        return false if entry[:key] != other_data[index][:key]
-        return false if entry[:value] != other_data[index][:value]
+        other_entry = other_data[index]
+        return false unless other_entry
+        return false if entry[:key] != other_entry[:key]
+        return false if entry[:value] != other_entry[:value]
       end
 
       true
