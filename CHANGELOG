@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Tue Apr 25 10:49:03 UTC 2017 - jreidinger@suse.com
 
-- fix writting two elements in collection containing nested tree
+- fix writing two elements in collection containing nested tree
   (also caused by fix for bsc#1023204)
 - 0.6.1
 
