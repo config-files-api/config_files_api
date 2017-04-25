@@ -24,6 +24,10 @@ Style/IndentHeredoc:
 Style/WordArray:
   Enabled: false
 
+# same as WordArray
+Style/SymbolArray:
+  Enabled: false
+
 # align arrows:
 # "foo"     => true
 # "foo_bar" => false
