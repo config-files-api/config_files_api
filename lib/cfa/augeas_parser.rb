@@ -238,6 +238,7 @@ module CFA
       return false if self.class != other.class
       other_data = other.data # do not compute again
       data.each_with_index do |entry, index|
+        return false unless other_data[index]
         return false if entry[:key] != other_data[index][:key]
         return false if entry[:value] != other_data[index][:value]
       end
