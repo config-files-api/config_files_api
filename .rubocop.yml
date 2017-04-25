@@ -16,6 +16,10 @@ Style/StringLiteralsInInterpolation:
 Style/MultilineOperationIndentation:
   EnforcedStyle: indented
 
+# disable heredoc style until we support ruby 2.3 only
+Style/IndentHeredoc:
+  Enabled: false
+
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md#arrays
 Style/WordArray:
   Enabled: false
