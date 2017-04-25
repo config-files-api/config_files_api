@@ -236,7 +236,7 @@ module CFA
       # @see https://github.com/hercules-team/augeas/wiki/Path-expressions
       def set_new_value(path, located_entry)
         aug.set(path, located_entry.entry_value)
-        # we need to get new path as path used in aug.set can look contain
+        # we need to get new path as path used in aug.set can contains
         # "[last() + 1]", so adding subtree to it, adds additional entry.
         # So here, we replace "[last() + 1]" with "[last()]" so it will match
         # path created by previous aug.set
