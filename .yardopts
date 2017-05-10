@@ -5,3 +5,4 @@
 --output-dir ./doc/
 --files *.md
 lib/**/*.rb
+doc/*.md
