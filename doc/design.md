@@ -4,13 +4,19 @@
 
 Is responsible for accessing configuration files itself. In simplest case it accesses local configuration files, but it can be adapted to access remote, chrooted or memory files too.
 
+As a file handler can be used whatever what implements read / write methods. For an example see e.g. [CFA::MemoryFile](http://www.rubydoc.info/github/config-files-api/config_files_api/CFA/MemoryFile). If you do not provide particular file handler for your model, CFA will use ruby's [File](https://ruby-doc.org/core-2.2.0/File.html) class as a default.
+
 ## Middle layer: Parser ##
 
 This layer parses the configuration file which was loaded by the underlying layer. It knows structure of the file and transforms it into abstract representation. The library typically uses external tool for parsing here like Augeas. So, if the external tools has a specific requirements, it has to be satisfied to get things working. For example if the Augeas is in use you need to provide him with a proper lens to parse the particular configuration file.
 
+Currently the mostly used parser is [CFA::AugeasParser](http://www.rubydoc.info/github/config-files-api/config_files_api/CFA/AugeasParser), so use it for reference on details.
+
 ## Top layer: Configuration file model ##
 
 Last layer creates a model of the configuration file – an API for accessing configuration from an application. It basically creates "an abstraction on top of another abstraction". It means that is unifies use of various tools which can be used for accessing and parsing various configuration files.
+
+If you're interested in details of this layer you can start with [CFA::BaseModel](http://www.rubydoc.info/github/config-files-api/config_files_api/CFA/BaseModel). This is generic class for configuration file model.
 
 ## Limitations ##
 
