@@ -3,6 +3,5 @@
 --protected
 --readme README.md
 --output-dir ./doc/
---files *.md
+--files doc/*.md
 lib/**/*.rb
-doc/*.md
