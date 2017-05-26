@@ -43,7 +43,9 @@ describe CFA::BaseModel do
   end
 
   describe ".attributes" do
-    let(:handler) { CFA::MemoryFile.new("port = 50 # need restart\nlord = 30\n") }
+    let(:handler) do
+      CFA::MemoryFile.new("port = 50 # need restart\nlord = 30\n")
+    end
 
     before do
       subject.load
