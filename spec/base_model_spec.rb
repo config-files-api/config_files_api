@@ -8,7 +8,8 @@ class TestModel < CFA::BaseModel
   PATH = "/var/lib/pgsql/postgresql.conf".freeze
 
   attributes(
-    port: "port"
+    port: "port",
+    lord: "lord"
   )
 
   def initialize(file_handler: nil)
@@ -42,7 +43,7 @@ describe CFA::BaseModel do
   end
 
   describe ".attributes" do
-    let(:handler) { CFA::MemoryFile.new("port = 50 # need restart\n") }
+    let(:handler) { CFA::MemoryFile.new("port = 50 # need restart\nlord = 30\n") }
 
     before do
       subject.load
@@ -50,12 +51,14 @@ describe CFA::BaseModel do
 
     it "defines reader" do
       expect(subject.port).to eq "50"
+      expect(subject.lord).to eq "30"
     end
 
     it "defines writer" do
       subject.port = "100"
+      subject.lord = "10"
       subject.save
-      expect(handler.content).to eq "port = 100 # need restart\n"
+      expect(handler.content).to eq "port = 100 # need restart\nlord = 10\n"
     end
   end
 end
