@@ -1,3 +1,9 @@
+require "cfa/matcher"
+require "cfa/placer"
+# FIXME: tree should be generic and not augeas specific,
+# not needed in 1.0 as planned
+require "cfa/augeas_parser"
+
 module CFA
   # A base class for models. Represents a configuration file as an object
   # with domain-specific attributes/methods. For persistent storage,
@@ -98,16 +104,29 @@ module CFA
     def self.attributes(attrs)
       attrs.each_pair do |method_name, key|
         define_method(method_name) do
-          generic_get(key)
+          tree_value_plain(generic_get(key))
         end
 
         define_method(:"#{method_name.to_s}=") do |value|
-          generic_set(key, value)
+          tree_value_change(key, value)
         end
       end
     end
 
   protected
+
+    def tree_value_plain(value)
+      value.is_a?(AugeasTreeValue) ? value.value : value
+    end
+
+    def tree_value_change(key, value)
+      old_value = generic_get(key)
+      if old_value.is_a?(AugeasTreeValue)
+        old_value.value = value
+        value = old_value
+      end
+      generic_set(key, value)
+    end
 
     attr_accessor :data
 

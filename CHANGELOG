@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Fri May 26 11:46:40 UTC 2017 - jreidinger@suse.com
+
+- Fix attributes to work with simple values with trailing comments
+  (bsc#1040946)
+- Fix using CFA::BaseModel#generic_set without requiring
+  CFA::Matcher
+- 0.6.2
+
+-------------------------------------------------------------------
 Tue Apr 25 10:49:03 UTC 2017 - jreidinger@suse.com
 
 - fix writing two elements in collection containing nested tree
