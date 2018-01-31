@@ -310,8 +310,9 @@ module CFA
     end
 
     # @param raw_string [String] a string to be parsed
+    # @param file_name [String] a file name, for error reporting ONLY
     # @return [AugeasTree] the parsed data
-    def parse(raw_string)
+    def parse(raw_string, file_name = nil)
       require "cfa/augeas_parser/reader"
       # Workaround for augeas lenses that don't handle files
       # without a trailing newline (bsc#1064623, bsc#1074891, bsc#1080051
@@ -324,15 +325,17 @@ module CFA
       root = load_path = nil
       Augeas.open(root, load_path, Augeas::NO_MODL_AUTOLOAD) do |aug|
         aug.set("/input", raw_string)
-        report_error(aug) unless aug.text_store(@lens, "/input", "/store")
+        report_error(aug, "parsing", file_name) \
+          unless aug.text_store(@lens, "/input", "/store")
 
         return AugeasReader.read(aug, "/store")
       end
     end
 
     # @param data [AugeasTree] the data to be serialized
+    # @param file_name [String] a file name, for error reporting ONLY
     # @return [String] a string to be written
-    def serialize(data)
+    def serialize(data, file_name = nil)
       require "cfa/augeas_parser/writer"
       # open augeas without any autoloading and it should not touch disk and
       # load lenses as needed only
@@ -343,7 +346,7 @@ module CFA
         AugeasWriter.new(aug).write("/store", data)
 
         res = aug.text_retrieve(@lens, "/input", "/store", "/output")
-        report_error(aug) unless res
+        report_error(aug, "serializing", file_name) unless res
 
         return aug.get("/output")
       end
@@ -358,16 +361,30 @@ module CFA
   private
 
     # @param aug [::Augeas]
-    def report_error(aug)
+    # @param activity ["parsing", "serializing"] for better error messages
+    # @param file_name [String,nil] a file name
+    def report_error(aug, activity, file_name)
       error = aug.error
       # zero is no error, so problem in lense
       if aug.error[:code].nonzero?
         raise "Augeas error #{error[:message]}. Details: #{error[:details]}."
       end
 
-      msg = aug.get("/augeas/text/store/error/message")
-      location = aug.get("/augeas/text/store/error/lens")
-      raise "Augeas parsing/serializing error: #{msg} at #{location}"
+      file_name ||= "(unknown file)"
+      raise format("Augeas #{activity} error: %<message>s" \
+                   " at #{file_name}:%<line>s:%<char>s, lens %<lens>s",
+        aug_get_error(aug))
+    end
+
+    def aug_get_error(aug)
+      {
+        message: aug.get("/augeas/text/store/error/message"),
+        line:    aug.get("/augeas/text/store/error/line"),
+        char:    aug.get("/augeas/text/store/error/char"), # column
+        # file, line+column range, like
+        # "/usr/share/augeas/lenses/dist/hosts.aug:23.12-.42:"
+        lens:    aug.get("/augeas/text/store/error/lens")
+      }
     end
   end
 end

@@ -26,7 +26,7 @@ describe CFA::AugeasParser do
     it "raises exception if augeas failed during parsing" do
       example_file = "invalid syntax\n"
 
-      msg = /Augeas parsing\/serializing error/
+      msg = /Augeas parsing error/
       expect { subject.parse(example_file) }.to raise_error(msg)
     end
   end
@@ -49,7 +49,7 @@ describe CFA::AugeasParser do
       example_tree = CFA::AugeasTree.new
       example_tree["invalid"] = "test"
 
-      msg = /Augeas parsing\/serializing error/
+      msg = /Augeas serializing error/
       expect { subject.serialize(example_tree) }.to raise_error(msg)
     end
   end
