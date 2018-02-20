@@ -366,8 +366,8 @@ module CFA
     def report_error(aug, activity, file_name)
       error = aug.error
       # zero is no error, so problem in lense
-      if aug.error[:code].nonzero?
-        raise "Augeas error #{error[:message]}. Details: #{error[:details]}."
+      if error[:code].nonzero?
+        raise "Augeas error: #{error[:message]}. Details: #{error[:details]}."
       end
 
       file_name ||= "(unknown file)"
