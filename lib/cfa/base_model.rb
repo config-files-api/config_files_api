@@ -51,7 +51,8 @@ module CFA
     # @raise a *parser* specific error. If the parsed String is malformed, then
     #   depending on the used parser it may raise an error.
     def load
-      self.data = @parser.parse(@file_handler.read(@file_path))
+      contents = @file_handler.read(@file_path)
+      self.data = @parser.parse(append_newline(contents))
       @loaded = true
     end
 
@@ -114,6 +115,13 @@ module CFA
     end
 
   protected
+
+    # Workaround for augeas lenses that don't handle files
+    # without a trailing newline
+    def append_newline(str)
+      return str if str[-1] == "\n"
+      str << "\n"
+    end
 
     def tree_value_plain(value)
       value.is_a?(AugeasTreeValue) ? value.value : value
