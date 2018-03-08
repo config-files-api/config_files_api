@@ -1,7 +1,7 @@
-$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 def load_data(path)
-  File.read(File.expand_path("../data/#{path}", __FILE__))
+  File.read(File.expand_path("data/#{path}", __dir__))
 end
 
 if ENV["COVERAGE"]
@@ -11,7 +11,7 @@ if ENV["COVERAGE"]
   SimpleCov.add_filter "_spec.rb"
 
   # for coverage we need to load all ruby files
-  src_location = File.expand_path("../../", __FILE__)
+  src_location = File.expand_path("../", __dir__)
   SimpleCov.track_files("#{src_location}/lib/**/*.rb")
 
   # use coveralls for on-line code coverage reporting at Travis CI

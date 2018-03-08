@@ -13,11 +13,11 @@ Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
 
 # Is there any justification for "aligned" which is the default?
-Style/MultilineOperationIndentation:
+Layout/MultilineOperationIndentation:
   EnforcedStyle: indented
 
 # disable heredoc style until we support ruby 2.3 only
-Style/IndentHeredoc:
+Layout/IndentHeredoc:
   Enabled: false
 
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md#arrays
@@ -34,16 +34,16 @@ Style/SymbolArray:
 # and also colons:
 # foo:     true
 # foo_bar: false
-Style/AlignHash:
+Layout/AlignHash:
   EnforcedHashRocketStyle: table
   EnforcedColonStyle: table
 
 # no extra indentation for multiline function calls
-Style/AlignParameters:
+Layout/AlignParameters:
   EnforcedStyle: with_fixed_indentation
 
 # no extra indentation for case
-Style/CaseIndentation:
+Layout/CaseIndentation:
   EnforcedStyle: end
 
 # "unless" has a different connotation than "if not"
@@ -59,7 +59,7 @@ Style/RegexpLiteral:
   Enabled: false
 
 # Easier recognization if access modified used
-Style/AccessModifierIndentation:
+Layout/AccessModifierIndentation:
   EnforcedStyle: outdent
 
 # method_alias is safer and more predictable
