@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Mar  8 07:13:41 UTC 2018 - jreidinger@suse.com
+
+- Workaround for augeas lenses that don't handle files without
+  a trailing newline (bsc#1064623, bsc#1074891, bsc#1080051
+  and gh#hercules-team/augeas#547)
+- 0.6.3
+
+-------------------------------------------------------------------
 Fri May 26 11:46:40 UTC 2017 - jreidinger@suse.com
 
 - Fix attributes to work with simple values with trailing comments
