@@ -313,6 +313,10 @@ module CFA
     # @return [AugeasTree] the parsed data
     def parse(raw_string)
       require "cfa/augeas_parser/reader"
+      # Workaround for augeas lenses that don't handle files
+      # without a trailing newline (bsc#1064623, bsc#1074891, bsc#1080051
+      # and gh#hercules-team/augeas#547)
+      raw_string += "\n" unless raw_string.end_with?("\n")
       @old_content = raw_string
 
       # open augeas without any autoloading and it should not touch disk and

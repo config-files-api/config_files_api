@@ -13,104 +13,104 @@ describe CFA::AugeasWriter do
   describe "#write" do
     context "for collections" do
       let(:input_text) do
-        <<EOS
+        <<EXAMPLE
 #comment1
 #comment2
 #comment3
-EOS
+EXAMPLE
       end
 
       it "deletes a collection item using a matcher" do
         tree.delete(CFA::Matcher.new(value_matcher: /comment1/))
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 #comment2
 #comment3
-EOS
+EXAMPLE
       end
 
       it "adds an item before another item" do
         matcher = CFA::Matcher.new(value_matcher: /comment2/)
         placer = CFA::BeforePlacer.new(matcher)
         tree.collection("#comment").add("comment new", placer)
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 #comment1
 #comment new
 #comment2
 #comment3
-EOS
+EXAMPLE
       end
 
       it "deletes a collection item using #collection" do
         tree.collection("#comment").delete(/comment2/)
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 #comment1
 #comment3
-EOS
+EXAMPLE
       end
     end
 
     context "for an existing subtree" do
       let(:input_text) do
-        <<EOS
+        <<EXAMPLE
 [main]
 to_change = 1 # trailing comment
 # comment 4
 to_remove = 1
-EOS
+EXAMPLE
       end
       let(:subtree) { tree["main"] }
 
       it "deletes an item" do
         subtree.delete("to_remove")
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 [main]
 to_change = 1 # trailing comment
 # comment 4
-EOS
+EXAMPLE
       end
 
       it "modifies the value of an AugeasTreeValue" do
         subtree["to_change"].value = "0"
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 [main]
 to_change = 0 # trailing comment
 # comment 4
 to_remove = 1
-EOS
+EXAMPLE
       end
 
       it "inserts an item" do
         placer = CFA::BeforePlacer.new(CFA::Matcher.new(key: "to_remove"))
         subtree.add("inserted", "1", placer)
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 [main]
 to_change = 1 # trailing comment
 # comment 4
 inserted=1
 to_remove = 1
-EOS
+EXAMPLE
       end
 
       it "inserts an item at the 1st position" do
         placer = CFA::BeforePlacer.new(CFA::Matcher.new(key: "to_change"))
         subtree.add("inserted", "1", placer)
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 [main]
 inserted=1
 to_change = 1 # trailing comment
 # comment 4
 to_remove = 1
-EOS
+EXAMPLE
       end
 
       it "removes the tree of an AugeasTreeValue" do
         subtree["to_change"] = "0"
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 [main]
 to_change = 0
 # comment 4
 to_remove = 1
-EOS
+EXAMPLE
       end
 
       it "changes a value to an AugeasTreeValue" do
@@ -118,21 +118,21 @@ EOS
         subtree3["#comment"] = "new trailing comment"
         tree_value = CFA::AugeasTreeValue.new(subtree3, "2")
         subtree["to_remove"] = tree_value
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 [main]
 to_change = 1 # trailing comment
 # comment 4
 to_remove = 2#new trailing comment
-EOS
+EXAMPLE
       end
     end
 
     context "for a new subtree" do
       let(:input_text) do
-        <<EOS
+        <<EXAMPLE
 [existing]
 unchanged = boring
-EOS
+EXAMPLE
       end
       let(:subtree) do
         subtree = CFA::AugeasTree.new
@@ -143,22 +143,22 @@ EOS
       it "adds a collection" do
         comments = subtree.collection("#comment")
         comments.add("this is a new section")
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 [existing]
 unchanged = boring
 [new]
 #this is a new section
-EOS
+EXAMPLE
       end
 
       it "adds an item" do
         subtree["new_item"] = "1"
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 [existing]
 unchanged = boring
 [new]
 new_item=1
-EOS
+EXAMPLE
       end
 
       it "adds an AugeasTreeValue" do
@@ -166,25 +166,25 @@ EOS
         subtree3["#comment"] = "new trailing comment"
         tree_value = CFA::AugeasTreeValue.new(subtree3, "1")
         subtree["trailing_comment"] = tree_value
-        expect(output_text).to eq <<EOS
+        expect(output_text).to eq <<EXAMPLE
 [existing]
 unchanged = boring
 [new]
 trailing_comment=1#new trailing comment
-EOS
+EXAMPLE
       end
     end
 
     it "writes entry which is added and then modified" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 k1 = 1
-EOF
-      expected = <<EOF
+EXAMPLE
+      expected = <<EXAMPLE
 [main]
 k1 = 1
 test=1
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -195,18 +195,18 @@ EOF
     end
 
     it "does not write entry which is added and then removed" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 k1 = 1
 # comment1
 # comment2
-EOF
-      expected = <<EOF
+EXAMPLE
+      expected = <<EXAMPLE
 [main]
 k1 = 1
 # comment1
 # comment2
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -220,13 +220,13 @@ EOF
     end
 
     it "removes entry which is modified and then removed" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 k1 = 1
-EOF
-      expected = <<EOF
+EXAMPLE
+      expected = <<EXAMPLE
 [main]
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -237,14 +237,14 @@ EOF
     end
 
     it "modified entry, which is removed and then modified" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 k1 = 1
-EOF
-      expected = <<EOF
+EXAMPLE
+      expected = <<EXAMPLE
 [main]
 k1 = 0
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -255,15 +255,15 @@ EOF
     end
 
     it "insert properly entry if it is in first position" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 k1 = 1
-EOF
-      expected = <<EOF
+EXAMPLE
+      expected = <<EXAMPLE
 [main]
 t1=1
 k1 = 1
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -275,15 +275,15 @@ EOF
     end
 
     it "writes entry if it is new one and others are removed" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 k1 = 1
 l1 = 1
-EOF
-      expected = <<EOF
+EXAMPLE
+      expected = <<EXAMPLE
 [main]
 t1=1
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -297,18 +297,18 @@ EOF
     end
 
     it "writes in correct order several new entries" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 k1 = 1
-EOF
-      expected = <<EOF
+EXAMPLE
+      expected = <<EXAMPLE
 [main]
 t1=1
 t2=1
 k1 = 1
 t3=1
 t4=1
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -325,18 +325,18 @@ EOF
     end
 
     it "properly writes two following new trees" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 t1 = 1
-EOF
-      expected = <<EOF
+EXAMPLE
+      expected = <<EXAMPLE
 [main]
 t1 = 1
 [main2]
 t1=2
 [main3]
 t1=3
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -351,16 +351,16 @@ EOF
     end
 
     it "writes properly new entry of same key as single entry already there" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 # test1
-EOF
+EXAMPLE
 
-      expected = <<EOF
+      expected = <<EXAMPLE
 [main]
 # test1
 #test2
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -370,15 +370,15 @@ EOF
     end
 
     it "writes properly new entry with same key as removed entry" do
-      input = <<EOF
+      input = <<EXAMPLE
 [main]
 t1 = 1
-EOF
+EXAMPLE
 
-      expected = <<EOF
+      expected = <<EXAMPLE
 [main]
 t1 = 2
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("puppet.lns")
       tree = parser.parse(input)
@@ -389,17 +389,17 @@ EOF
     end
 
     it "writes properly multiple subtrees" do
-      input = <<EOF
+      input = <<EXAMPLE
 server 0.pool.ntp.org
 server 1.pool.ntp.org
-EOF
+EXAMPLE
 
-      expected = <<EOF
+      expected = <<EXAMPLE
 server 0.pool.ntp.org
 server 1.pool.ntp.org
 server 2.pool.ntp.org iburst dynamic
 server 3.pool.ntp.org iburst
-EOF
+EXAMPLE
 
       parser = CFA::AugeasParser.new("ntp.lns")
       tree = parser.parse(input)

@@ -70,7 +70,6 @@ module CFA
       tree[key]
     end
 
-    # rubocop:disable Style/TrivialAccessors
     # Returns if configuration was already loaded
     def loaded?
       @loaded
@@ -82,11 +81,11 @@ module CFA
       @default_file_handler ||= File
     end
 
-    # Sets default file handler. Useful when needed to change default like if
-    # whole program use non standard file reading.
-    # @param value for value specification see constructor
-    def self.default_file_handler=(value)
-      @default_file_handler = value
+    class << self
+      # Sets default file handler. Useful when needed to change default like if
+      # whole program use non standard file reading.
+      # @param value for value specification see constructor
+      attr_writer :default_file_handler
     end
 
     # Generates accessors for trivial key-value attributes
