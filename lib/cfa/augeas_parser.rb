@@ -298,21 +298,25 @@ module CFA
   #    require "cfa/augeas_parser"
   #
   #    parser = CFA::AugeasParser.new("Sysconfig.lns")
+  #    parser.file_name = "/etc/default/grub" # for error reporting
   #    data = parser.parse(File.read("/etc/default/grub"))
   #
   #    puts data["GRUB_DISABLE_OS_PROBER"]
   #    data["GRUB_DISABLE_OS_PROBER"] = "true"
   #    puts parser.serialize(data)
   class AugeasParser
+    # @return [String] optional, used for error reporting
+    attr_accessor :file_name
+
     # @param lens [String] a lens name, like "Sysconfig.lns"
     def initialize(lens)
       @lens = lens
+      @file_name = nil
     end
 
     # @param raw_string [String] a string to be parsed
-    # @param file_name [String] a file name, for error reporting ONLY
     # @return [AugeasTree] the parsed data
-    def parse(raw_string, file_name = nil)
+    def parse(raw_string)
       require "cfa/augeas_parser/reader"
       # Workaround for augeas lenses that don't handle files
       # without a trailing newline (bsc#1064623, bsc#1074891, bsc#1080051
@@ -333,9 +337,8 @@ module CFA
     end
 
     # @param data [AugeasTree] the data to be serialized
-    # @param file_name [String] a file name, for error reporting ONLY
     # @return [String] a string to be written
-    def serialize(data, file_name = nil)
+    def serialize(data)
       require "cfa/augeas_parser/writer"
       # open augeas without any autoloading and it should not touch disk and
       # load lenses as needed only

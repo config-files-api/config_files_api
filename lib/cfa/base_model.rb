@@ -39,7 +39,8 @@ module CFA
     #   insertion of such values in the first place.
     def save(changes_only: false)
       merge_changes if changes_only
-      @file_handler.write(@file_path, @parser.serialize(data, @file_path))
+      @parser.file_name = @file_path if @parser.respond_to?(:file_name=)
+      @file_handler.write(@file_path, @parser.serialize(data))
     end
 
     # Reads a String using *file_handler*
@@ -51,7 +52,8 @@ module CFA
     # @raise a *parser* specific error. If the parsed String is malformed, then
     #   depending on the used parser it may raise an error.
     def load
-      self.data = @parser.parse(@file_handler.read(@file_path), @file_path)
+      @parser.file_name = @file_path if @parser.respond_to?(:file_name=)
+      self.data = @parser.parse(@file_handler.read(@file_path))
       @loaded = true
     end
 
