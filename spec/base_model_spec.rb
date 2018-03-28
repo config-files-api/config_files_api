@@ -17,6 +17,28 @@ class TestModel < CFA::BaseModel
   end
 end
 
+# Most models will use the AugeasParser that we supply but we
+# must not rely on that. Test with a non-standard parser.
+class NonAugeasModel < CFA::BaseModel
+  class Parser
+    def parse(raw_string)
+      raw_string.size
+    end
+
+    def serialize(data)
+      "*" * data
+    end
+
+    def empty
+      0
+    end
+  end
+
+  def initialize(file_handler: nil)
+    super(Parser.new, "/wherever", file_handler: file_handler)
+  end
+end
+
 describe CFA::BaseModel do
   let(:handler) { nil }
   subject { TestModel.new(file_handler: handler) }
@@ -61,6 +83,19 @@ describe CFA::BaseModel do
       subject.lord = "10"
       subject.save
       expect(handler.content).to eq "port = 100 # need restart\nlord = 10\n"
+    end
+  end
+
+  context "the parser does not provide #file_name= for error reporting" do
+    let(:handler) { CFA::MemoryFile.new(".....") }
+    subject { NonAugeasModel.new(file_handler: handler) }
+
+    it "loads without crashing" do
+      expect { subject.load }.to_not raise_error
+    end
+
+    it "saves without crashing" do
+      expect { subject.save }.to_not raise_error
     end
   end
 end

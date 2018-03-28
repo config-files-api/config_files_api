@@ -24,10 +24,19 @@ describe CFA::AugeasParser do
     end
 
     it "raises exception if augeas failed during parsing" do
-      example_file = "invalid syntax\n"
+      example_file = "root ALL=(ALL) ALL\ninvalid syntax\n"
+      subject.file_name = "/dev/garbage"
 
-      msg = /Augeas parsing\/serializing error/
+      msg = /Augeas parsing error: .* at \/dev\/garbage:2:0/
       expect { subject.parse(example_file) }.to raise_error(msg)
+    end
+
+    it "raises exception if augeas lens failed" do
+      example_file = "root ALL=(ALL) ALL\n"
+      bad_parser = described_class.new("nosuchlens.lns")
+
+      msg = /Augeas error: .* Details:/
+      expect { bad_parser.parse(example_file) }.to raise_error(msg)
     end
   end
 
@@ -48,9 +57,11 @@ describe CFA::AugeasParser do
     it "raises exception if passed tree cannot be converted by augeas lens" do
       example_tree = CFA::AugeasTree.new
       example_tree["invalid"] = "test"
+      subject.file_name = "/etc/sudoers"
 
-      msg = /Augeas parsing\/serializing error/
-      expect { subject.serialize(example_tree) }.to raise_error(msg)
+      msg = /Augeas serializing error: .* at \/etc\/sudoers::/
+      expect { subject.serialize(example_tree) }
+        .to raise_error(msg)
     end
   end
 

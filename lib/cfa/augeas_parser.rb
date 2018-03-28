@@ -298,15 +298,20 @@ module CFA
   #    require "cfa/augeas_parser"
   #
   #    parser = CFA::AugeasParser.new("Sysconfig.lns")
+  #    parser.file_name = "/etc/default/grub" # for error reporting
   #    data = parser.parse(File.read("/etc/default/grub"))
   #
   #    puts data["GRUB_DISABLE_OS_PROBER"]
   #    data["GRUB_DISABLE_OS_PROBER"] = "true"
   #    puts parser.serialize(data)
   class AugeasParser
+    # @return [String] optional, used for error reporting
+    attr_accessor :file_name
+
     # @param lens [String] a lens name, like "Sysconfig.lns"
     def initialize(lens)
       @lens = lens
+      @file_name = nil
     end
 
     # @param raw_string [String] a string to be parsed
@@ -324,7 +329,8 @@ module CFA
       root = load_path = nil
       Augeas.open(root, load_path, Augeas::NO_MODL_AUTOLOAD) do |aug|
         aug.set("/input", raw_string)
-        report_error(aug) unless aug.text_store(@lens, "/input", "/store")
+        report_error(aug, "parsing", file_name) \
+          unless aug.text_store(@lens, "/input", "/store")
 
         return AugeasReader.read(aug, "/store")
       end
@@ -343,7 +349,7 @@ module CFA
         AugeasWriter.new(aug).write("/store", data)
 
         res = aug.text_retrieve(@lens, "/input", "/store", "/output")
-        report_error(aug) unless res
+        report_error(aug, "serializing", file_name) unless res
 
         return aug.get("/output")
       end
@@ -358,16 +364,30 @@ module CFA
   private
 
     # @param aug [::Augeas]
-    def report_error(aug)
+    # @param activity ["parsing", "serializing"] for better error messages
+    # @param file_name [String,nil] a file name
+    def report_error(aug, activity, file_name)
       error = aug.error
       # zero is no error, so problem in lense
-      if aug.error[:code].nonzero?
-        raise "Augeas error #{error[:message]}. Details: #{error[:details]}."
+      if error[:code].nonzero?
+        raise "Augeas error: #{error[:message]}. Details: #{error[:details]}."
       end
 
-      msg = aug.get("/augeas/text/store/error/message")
-      location = aug.get("/augeas/text/store/error/lens")
-      raise "Augeas parsing/serializing error: #{msg} at #{location}"
+      file_name ||= "(unknown file)"
+      raise format("Augeas #{activity} error: %<message>s" \
+                   " at #{file_name}:%<line>s:%<char>s, lens %<lens>s",
+        aug_get_error(aug))
+    end
+
+    def aug_get_error(aug)
+      {
+        message: aug.get("/augeas/text/store/error/message"),
+        line:    aug.get("/augeas/text/store/error/line"),
+        char:    aug.get("/augeas/text/store/error/char"), # column
+        # file, line+column range, like
+        # "/usr/share/augeas/lenses/dist/hosts.aug:23.12-.42:"
+        lens:    aug.get("/augeas/text/store/error/lens")
+      }
     end
   end
 end
