@@ -27,7 +27,8 @@ describe CFA::AugeasParser do
       example_file = "root ALL=(ALL) ALL\ninvalid syntax\n"
       subject.file_name = "/dev/garbage"
 
-      msg = /Augeas parsing error: .* at \/dev\/garbage:2:8/
+      # character possition depends on augeas version
+      msg = /Augeas parsing error: .* at \/dev\/garbage:2:[08]/
       expect { subject.parse(example_file) }.to raise_error(msg)
     end
 
