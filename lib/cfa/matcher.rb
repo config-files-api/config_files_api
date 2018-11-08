@@ -43,6 +43,7 @@ module CFA
         return false unless collection_match?(element, collection)
         return false unless value_match?(element, value_matcher)
         return false unless !block || yield(element[:key], element[:value])
+
         return true
       end
     end
@@ -71,6 +72,7 @@ module CFA
       when nil then true
       when Regexp
         return false unless element[:value].is_a?(String)
+
         matcher =~ element[:value]
       else
         matcher == element[:value]

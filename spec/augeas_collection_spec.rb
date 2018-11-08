@@ -5,9 +5,11 @@ require "cfa/augeas_parser"
 def ntp_restrict_value(restrict_entry)
   entry = restrict_entry.split
   return "" if entry.empty?
+
   value = entry.first
   actions = entry[1..-1]
   return value if actions.empty?
+
   tree = CFA::AugeasTree.new
   actions.each { |a| tree.add("action[]", a) }
   CFA::AugeasTreeValue.new(tree, value)

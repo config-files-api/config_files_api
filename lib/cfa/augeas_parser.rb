@@ -35,7 +35,8 @@ module CFA
   class AugeasElement < Hash
   end
 
-  # Error that is raised when augeas fail for some reason. Base class for more speciazed exceptions.
+  # Error that is raised when augeas fail for some reason.
+  # Base class for more specialized exceptions.
   class AugeasError < RuntimeError
   end
 
@@ -73,7 +74,6 @@ module CFA
         " at #{@file}:#{@line}:#{@char}, lens #{@lens}"
       )
     end
-
   end
 
   # Represents list of same config options in augeas.
@@ -209,6 +209,7 @@ module CFA
       id = 1
       loop do
         return id.to_s unless ids.include?(id.to_s)
+
         id += 1
       end
     end
@@ -221,6 +222,7 @@ module CFA
     # @param [String, Matcher] matcher
     def delete(matcher)
       return if matcher.nil?
+
       unless matcher.is_a?(CFA::Matcher)
         matcher = CFA::Matcher.new(key: matcher)
       end
@@ -277,6 +279,7 @@ module CFA
 
     def ==(other)
       return false if self.class != other.class
+
       other_data = other.data # do not compute again
       data.each_with_index do |entry, index|
         other_entry = other_data[index]
