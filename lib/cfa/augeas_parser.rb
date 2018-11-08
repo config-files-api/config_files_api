@@ -35,6 +35,47 @@ module CFA
   class AugeasElement < Hash
   end
 
+  # Error that is raised when augeas fail for some reason. Base class for more speciazed exceptions.
+  class AugeasError < RuntimeError
+  end
+
+  # Error in augeas itself like broken lense
+  class AugeasInternalError < AugeasError
+    attr_reader :details
+    attr_reader :aug_message
+
+    def initialize(message, details)
+      @aug_message = message
+      @details = details
+
+      super("Augeas error: #{message}. Details: #{details}.")
+    end
+  end
+
+  # Parsing/serializing error
+  class AugeasSerializingError < AugeasError
+    attr_reader :activity
+    attr_reader :aug_message
+    attr_reader :file
+    attr_reader :line
+    attr_reader :character
+    attr_reader :lens
+
+    def initialize(params)
+      @activity = params[:activity]
+      @aug_message = params[:message]
+      @file = params[:file]
+      @line = params[:line]
+      @char = params[:char]
+      @lens = params[:lens]
+
+      super("Augeas #{@activity} error: #{@aug_message}" \
+        " at #{@file}:#{@line}:#{@char}, lens #{@lens}"
+      )
+    end
+
+  end
+
   # Represents list of same config options in augeas.
   # For example comments are often stored in collections.
   class AugeasCollection
@@ -370,13 +411,14 @@ module CFA
       error = aug.error
       # zero is no error, so problem in lense
       if error[:code].nonzero?
-        raise "Augeas error: #{error[:message]}. Details: #{error[:details]}."
+        raise AugeasInternalError.new(error[:message], error[:details])
       end
 
       file_name ||= "(unknown file)"
-      raise format("Augeas #{activity} error: %<message>s" \
-                   " at #{file_name}:%<line>s:%<char>s, lens %<lens>s",
-        aug_get_error(aug))
+      args = aug_get_error(aug)
+      args[:activity] = activity
+      args[:file] = file_name
+      raise AugeasSerializingError, args
     end
 
     def aug_get_error(aug)

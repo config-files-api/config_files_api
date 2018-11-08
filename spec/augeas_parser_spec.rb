@@ -27,7 +27,7 @@ describe CFA::AugeasParser do
       example_file = "root ALL=(ALL) ALL\ninvalid syntax\n"
       subject.file_name = "/dev/garbage"
 
-      msg = /Augeas parsing error: .* at \/dev\/garbage:2:0/
+      msg = /Augeas parsing error: .* at \/dev\/garbage:2:8/
       expect { subject.parse(example_file) }.to raise_error(msg)
     end
 
@@ -59,7 +59,7 @@ describe CFA::AugeasParser do
       example_tree["invalid"] = "test"
       subject.file_name = "/etc/sudoers"
 
-      msg = /Augeas serializing error: .* at \/etc\/sudoers::/
+      msg = /Augeas serializing error: .* at \/etc\/sudoers::/m
       expect { subject.serialize(example_tree) }
         .to raise_error(msg)
     end
