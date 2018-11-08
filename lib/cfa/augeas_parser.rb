@@ -35,6 +35,66 @@ module CFA
   class AugeasElement < Hash
   end
 
+  # Error that is raised when augeas fail for some reason.
+  # Base class for more specialized exceptions.
+  class AugeasError < RuntimeError
+  end
+
+  # Error in augeas itself like broken lens
+  class AugeasInternalError < AugeasError
+    attr_reader :details
+    attr_reader :aug_message
+
+    def initialize(message, details)
+      @aug_message = message
+      @details = details
+
+      super("Augeas error: #{message}. Details: #{details}.")
+    end
+  end
+
+  # Parsing error
+  class AugeasParsingError < AugeasError
+    attr_reader :aug_message
+    attr_reader :file
+    attr_reader :line
+    attr_reader :character
+    attr_reader :lens
+    attr_reader :file_content
+
+    def initialize(params)
+      @aug_message = params[:message]
+      @file = params[:file]
+      @line = params[:line]
+      @char = params[:char]
+      @lens = params[:lens]
+      @file_content = params[:file_content]
+
+      super("Augeas parsing error: #{@aug_message}" \
+        " at #{@file}:#{@line}:#{@char}, lens #{@lens}"
+      )
+    end
+  end
+
+  # Serializing error
+  class AugeasSerializingError < AugeasError
+    attr_reader :aug_message
+    attr_reader :file
+    attr_reader :lens
+    attr_reader :aug_tree
+
+    def initialize(params)
+      @aug_message = params[:message]
+      @file = params[:file]
+      @lens = params[:lens]
+      @aug_tree = params[:aug_tree]
+
+      super("Augeas serializing error: #{@aug_message}" \
+        " for #{@file} with lens #{@lens}"
+      )
+    end
+  end
+
   # Represents list of same config options in augeas.
   # For example comments are often stored in collections.
   class AugeasCollection
@@ -168,6 +228,7 @@ module CFA
       id = 1
       loop do
         return id.to_s unless ids.include?(id.to_s)
+
         id += 1
       end
     end
@@ -180,6 +241,7 @@ module CFA
     # @param [String, Matcher] matcher
     def delete(matcher)
       return if matcher.nil?
+
       unless matcher.is_a?(CFA::Matcher)
         matcher = CFA::Matcher.new(key: matcher)
       end
@@ -236,6 +298,7 @@ module CFA
 
     def ==(other)
       return false if self.class != other.class
+
       other_data = other.data # do not compute again
       data.each_with_index do |entry, index|
         other_entry = other_data[index]
@@ -329,7 +392,7 @@ module CFA
       root = load_path = nil
       Augeas.open(root, load_path, Augeas::NO_MODL_AUTOLOAD) do |aug|
         aug.set("/input", raw_string)
-        report_error(aug, "parsing", file_name) \
+        report_error(aug, :parsing, file_name, raw_string) \
           unless aug.text_store(@lens, "/input", "/store")
 
         return AugeasReader.read(aug, "/store")
@@ -349,7 +412,7 @@ module CFA
         AugeasWriter.new(aug).write("/store", data)
 
         res = aug.text_retrieve(@lens, "/input", "/store", "/output")
-        report_error(aug, "serializing", file_name) unless res
+        report_error(aug, :serializing, file_name, data) unless res
 
         return aug.get("/output")
       end
@@ -364,19 +427,38 @@ module CFA
   private
 
     # @param aug [::Augeas]
-    # @param activity ["parsing", "serializing"] for better error messages
+    # @param activity [:parsing, :serializing] for better error messages
     # @param file_name [String,nil] a file name
-    def report_error(aug, activity, file_name)
-      error = aug.error
-      # zero is no error, so problem in lense
-      if error[:code].nonzero?
-        raise "Augeas error: #{error[:message]}. Details: #{error[:details]}."
-      end
+    # @param data [AugeasTree, String] used data so augeas tree for
+    #   serializing or file content for parsing
+    def report_error(aug, activity, file_name, data = nil)
+      report_internal_error!(aug)
 
       file_name ||= "(unknown file)"
-      raise format("Augeas #{activity} error: %<message>s" \
-                   " at #{file_name}:%<line>s:%<char>s, lens %<lens>s",
-        aug_get_error(aug))
+      args = aug_get_error(aug)
+      args[:file] = file_name
+      report_activity_error!(args, activity, data)
+    end
+
+    def report_internal_error!(aug)
+      error = aug.error
+      # zero is no error, so there's a problem in the lens
+      return if error[:code].zero?
+
+      raise AugeasInternalError.new(error[:message], error[:details])
+    end
+
+    def report_activity_error!(args, activity, data)
+      case activity
+      when :parsing
+        args[:file_content] = data
+        raise AugeasParsingError, args
+      when :serializing
+        args[:aug_tree] = data
+        raise AugeasSerializingError, args
+      else
+        raise ArgumentError, "invalid activity #{activity.inspect}"
+      end
     end
 
     def aug_get_error(aug)

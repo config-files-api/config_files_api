@@ -22,6 +22,7 @@ module CFA
       loop do
         matches = aug.match(search_path)
         break if matches.empty?
+
         assign_matches(matches, @cache)
 
         search_path += "/*"

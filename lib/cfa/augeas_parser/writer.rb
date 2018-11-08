@@ -139,6 +139,7 @@ module CFA
       # the entries preceding this entry
       def preceding_entries
         return [] if index.zero? # first entry
+
         tree.all_data[0..(index - 1)]
       end
 
