@@ -40,7 +40,7 @@ module CFA
   class AugeasError < RuntimeError
   end
 
-  # Error in augeas itself like broken lense
+  # Error in augeas itself like broken lens
   class AugeasInternalError < AugeasError
     attr_reader :details
     attr_reader :aug_message
