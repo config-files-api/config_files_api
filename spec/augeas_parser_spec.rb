@@ -60,7 +60,7 @@ describe CFA::AugeasParser do
       example_tree["invalid"] = "test"
       subject.file_name = "/etc/sudoers"
 
-      msg = /Augeas serializing error: .* at \/etc\/sudoers::/m
+      msg = /Augeas serializing error: .*for \/etc\/sudoers/m
       expect { subject.serialize(example_tree) }
         .to raise_error(msg)
     end
