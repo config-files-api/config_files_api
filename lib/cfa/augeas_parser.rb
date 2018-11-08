@@ -412,7 +412,7 @@ module CFA
     # @param file_name [String,nil] a file name
     def report_error(aug, activity, file_name)
       error = aug.error
-      # zero is no error, so problem in lense
+      # zero is no error, so there's a problem in the lens
       if error[:code].nonzero?
         raise AugeasInternalError.new(error[:message], error[:details])
       end
