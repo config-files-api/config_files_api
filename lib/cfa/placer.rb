@@ -3,10 +3,11 @@ module CFA
   # @abstract Subclasses implement different ways **where**
   #   to place the entry by overriding {#new_element}.
   class Placer
-    # @param  [AugeasTree] tree
-    # @return [AugeasElement,Hash] the new element; it is empty!
-    #   Note that the return value is actually a Hash; {AugeasElement}
-    #   documents its structure.
+    # @overload new_element(tree)
+    #   @param  [AugeasTree] tree
+    #   @return [AugeasElement,Hash] the new element; it is empty!
+    #     Note that the return value is actually a Hash; {AugeasElement}
+    #     documents its structure.
     def new_element(_tree)
       raise NotImplementedError,
         "Subclasses of #{Module.nesting.first} must override #{__method__}"
