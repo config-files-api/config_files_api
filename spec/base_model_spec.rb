@@ -3,6 +3,7 @@ require "cfa/augeas_parser"
 require "cfa/base_model"
 require "cfa/memory_file"
 
+# A testing model
 class TestModel < CFA::BaseModel
   PARSER = CFA::AugeasParser.new("postgresql.lns")
   PATH = "/var/lib/pgsql/postgresql.conf".freeze
@@ -20,6 +21,7 @@ end
 # Most models will use the AugeasParser that we supply but we
 # must not rely on that. Test with a non-standard parser.
 class NonAugeasModel < CFA::BaseModel
+  # Non-Augeas parser
   class Parser
     def parse(raw_string)
       raw_string.size
@@ -96,6 +98,105 @@ describe CFA::BaseModel do
 
     it "saves without crashing" do
       expect { subject.save }.to_not raise_error
+    end
+  end
+end
+
+describe CFA::BooleanValue do
+  let(:name) { "my_bool" }
+  let(:model) { TestModel.new }
+
+  subject { described_class.new(name, model) }
+
+  describe "#enabled?" do
+    it "returns nil when unset" do
+      expect(subject.enabled?).to be_nil
+    end
+
+    it "returns true when 'true'" do
+      expect(subject).to receive(:data).and_return("true")
+      expect(subject.enabled?).to eq(true)
+    end
+
+    it "returns false when 'false'" do
+      expect(subject).to receive(:data).and_return("false")
+      expect(subject.enabled?).to eq(false)
+    end
+
+    it "returns false when 'other'" do
+      expect(subject).to receive(:data).and_return("other")
+      expect(subject.enabled?).to eq(false)
+    end
+  end
+
+  describe "#disabled?" do
+    it "returns nil when unset" do
+      expect(subject.disabled?).to be_nil
+    end
+
+    it "returns false when 'true'" do
+      expect(subject).to receive(:data).and_return("true")
+      expect(subject.disabled?).to eq(false)
+    end
+
+    it "returns true when 'false'" do
+      expect(subject).to receive(:data).and_return("false")
+      expect(subject.disabled?).to eq(true)
+    end
+
+    it "returns true when 'other'" do
+      expect(subject).to receive(:data).and_return("other")
+      expect(subject.disabled?).to eq(true)
+    end
+  end
+
+  describe "#defined?" do
+    it "returns false when unset" do
+      expect(subject.defined?).to eq(false)
+    end
+
+    it "returns false when set" do
+      expect(subject).to receive(:data).and_return("whatever")
+      expect(subject.defined?).to eq(true)
+    end
+  end
+
+  describe "#value=" do
+    it "sets a true value" do
+      subject.value = true
+      expect(subject.enabled?).to eq(true)
+    end
+
+    it "sets a false value" do
+      subject.value = false
+      expect(subject.enabled?).to eq(false)
+    end
+  end
+
+  describe "#enable" do
+    it "sets a true value" do
+      subject.enable
+      expect(subject.enabled?).to eq(true)
+    end
+  end
+
+  describe "#disable" do
+    it "sets a false value" do
+      subject.disable
+      expect(subject.enabled?).to eq(false)
+    end
+  end
+
+  describe "#inspect" do
+    it "produces a nice description" do
+      expect(subject.inspect)
+        .to match(/#<
+                   CFA::BooleanValue:0x.* \s
+                   name=\"my_bool\", \s
+                   data=nil, \s
+                   true_value=\"true\", \s
+                   false_value=\"false\"
+                   >/x)
     end
   end
 end

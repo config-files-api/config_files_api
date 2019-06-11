@@ -172,10 +172,16 @@ module CFA
     end
   end
 
-  # Representing boolean value switcher in default grub configuration file.
+  # Represents a boolean value switcher in default grub configuration file.
   # Allows easy switching and questioning for boolean value, even if
-  # represented by text in config file
+  # represented by text in config file.
+  # It's tristate: if unset, {#enabled?} and {#disabled?} return `nil`
+  # (but once set, we cannot return to an unset state).
   class BooleanValue
+    # @param name [String]
+    # @param model [BaseModel]
+    # @param true_value [String]
+    # @param false_value [String]
     def initialize(name, model, true_value: "true", false_value: "false")
       @name = name
       @model = model
@@ -183,14 +189,17 @@ module CFA
       @false_value = false_value
     end
 
+    # Set to *true*
     def enable
       @model.generic_set(@name, @true_value)
     end
 
+    # Set to *false*
     def disable
       @model.generic_set(@name, @false_value)
     end
 
+    # @return [Boolean,nil] true, false, (nil if undefined)
     def enabled?
       d = data
       return nil unless d
@@ -198,6 +207,7 @@ module CFA
       d == @true_value
     end
 
+    # @return [Boolean,nil] true, false, (nil if undefined)
     def disabled?
       d = data
       return nil unless d
@@ -205,12 +215,16 @@ module CFA
       d != @true_value
     end
 
+    # @return [Boolean]
+    #   true if the key has a value;
+    #   false if {#enabled?} and {#disabled?} return `nil`.
     def defined?
       !data.nil?
     end
 
     # sets boolean value, recommend to use for generic boolean setter.
     # for constants prefer to use enable/disable
+    # @param value [Boolean]
     def value=(value)
       @model.generic_set(@name, value ? @true_value : @false_value)
     end
