@@ -192,15 +192,17 @@ module CFA
     end
 
     def enabled?
-      return nil unless data
+      d = data
+      return nil unless d
 
-      data == @true_value
+      d == @true_value
     end
 
     def disabled?
-      return nil unless data
+      d = data
+      return nil unless d
 
-      data != @true_value
+      d != @true_value
     end
 
     def defined?
