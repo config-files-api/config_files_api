@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "cfa/matcher"
 require "cfa/placer"
 # FIXME: tree should be generic and not augeas specific,

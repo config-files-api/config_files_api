@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "spec_helper"
 require "cfa/augeas_parser"
 require "cfa/base_model"
@@ -6,7 +8,7 @@ require "cfa/memory_file"
 # A testing model
 class TestModel < CFA::BaseModel
   PARSER = CFA::AugeasParser.new("postgresql.lns")
-  PATH = "/var/lib/pgsql/postgresql.conf".freeze
+  PATH = "/var/lib/pgsql/postgresql.conf"
 
   attributes(
     port: "port",

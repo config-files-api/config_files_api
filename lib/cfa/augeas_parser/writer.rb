@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module CFA
   # The goal of this class is to write the data stored in {AugeasTree}
   # back to Augeas.
