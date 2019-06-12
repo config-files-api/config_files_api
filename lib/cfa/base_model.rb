@@ -39,8 +39,7 @@ module CFA
     #   then *parser* may raise an error.
     #   A properly written BaseModel subclass should prevent that by preventing
     #   insertion of such values in the first place.
-    def save(changes_only: false)
-      merge_changes if changes_only
+    def save
       @parser.file_name = @file_path if @parser.respond_to?(:file_name=)
       @file_handler.write(@file_path, @parser.serialize(data))
     end
@@ -132,13 +131,6 @@ module CFA
     end
 
     attr_accessor :data
-
-    def merge_changes
-      new_data = data.dup
-      read
-      # TODO: recursive merge
-      data.merge(new_data)
-    end
 
     # Modify an **existing** entry and return `true`,
     # or do nothing and return `false`.
