@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "cfa/matcher"
 require "cfa/placer"
 # FIXME: tree should be generic and not augeas specific,
@@ -37,8 +39,7 @@ module CFA
     #   then *parser* may raise an error.
     #   A properly written BaseModel subclass should prevent that by preventing
     #   insertion of such values in the first place.
-    def save(changes_only: false)
-      merge_changes if changes_only
+    def save
       @parser.file_name = @file_path if @parser.respond_to?(:file_name=)
       @file_handler.write(@file_path, @parser.serialize(data))
     end
@@ -131,13 +132,6 @@ module CFA
 
     attr_accessor :data
 
-    def merge_changes
-      new_data = data.dup
-      read
-      # TODO: recursive merge
-      data.merge(new_data)
-    end
-
     # Modify an **existing** entry and return `true`,
     # or do nothing and return `false`.
     # @return [Boolean]
@@ -172,10 +166,16 @@ module CFA
     end
   end
 
-  # Representing boolean value switcher in default grub configuration file.
+  # Represents a boolean value switcher in default grub configuration file.
   # Allows easy switching and questioning for boolean value, even if
-  # represented by text in config file
+  # represented by text in config file.
+  # It's tristate: if unset, {#enabled?} and {#disabled?} return `nil`
+  # (but once set, we cannot return to an unset state).
   class BooleanValue
+    # @param name [String]
+    # @param model [BaseModel]
+    # @param true_value [String]
+    # @param false_value [String]
     def initialize(name, model, true_value: "true", false_value: "false")
       @name = name
       @model = model
@@ -183,32 +183,42 @@ module CFA
       @false_value = false_value
     end
 
+    # Set to *true*
     def enable
       @model.generic_set(@name, @true_value)
     end
 
+    # Set to *false*
     def disable
       @model.generic_set(@name, @false_value)
     end
 
+    # @return [Boolean,nil] true, false, (nil if undefined)
     def enabled?
-      return nil unless data
+      d = data
+      return nil unless d
 
-      data == @true_value
+      d == @true_value
     end
 
+    # @return [Boolean,nil] true, false, (nil if undefined)
     def disabled?
-      return nil unless data
+      d = data
+      return nil unless d
 
-      data != @true_value
+      d != @true_value
     end
 
+    # @return [Boolean]
+    #   true if the key has a value;
+    #   false if {#enabled?} and {#disabled?} return `nil`.
     def defined?
       !data.nil?
     end
 
     # sets boolean value, recommend to use for generic boolean setter.
     # for constants prefer to use enable/disable
+    # @param value [Boolean]
     def value=(value)
       @model.generic_set(@name, value ? @true_value : @false_value)
     end

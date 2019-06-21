@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # use with `time ruby <path>` to test changes in library
 # goal of this tests are to measure time, for correctness is used
 # tests in spec directory

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module CFA
   # Places a new {AugeasElement} into an {AugeasTree}.
   # @abstract Subclasses implement different ways **where**
@@ -10,7 +12,7 @@ module CFA
     #     documents its structure.
     def new_element(_tree)
       raise NotImplementedError,
-        "Subclasses of #{Module.nesting.first} must override #{__method__}"
+            "Subclasses of #{Module.nesting.first} must override #{__method__}"
     end
 
   protected

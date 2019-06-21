@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module CFA
   # A cache that holds all avaiable keys in an Augeas tree. It is used to
   # prevent too many `aug.match` calls which are expensive.

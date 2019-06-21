@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "spec_helper"
 
 require "cfa/augeas_parser"
@@ -69,6 +71,17 @@ describe CFA::AugeasTree do
     it "adds new key with given value if key is not already used" do
       tree["new_cool_key"] = "Ever cooler value"
       expect(tree["new_cool_key"]).to eq "Ever cooler value"
+    end
+
+    it "adds a new key and then overwrites it with a different kind" do
+      tree["shopping_cart"] = "orange"
+
+      subtree = CFA::AugeasTree.new
+      subtree["item"] = "orange"
+      subtree["note"] = "paint, not fruit"
+      tree["shopping_cart"] = subtree
+
+      expect(tree["shopping_cart"]["item"]).to eq "orange"
     end
   end
 

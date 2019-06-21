@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "set"
 require "augeas"
 require "forwardable"
@@ -323,6 +325,7 @@ module CFA
       @data.insert(index, new_entry)
       # the entry is not yet in the tree
       if old_entry[:operation] == :add
+        key = old_entry[:key]
         @data.delete_if { |d| d[:key] == key }
       else
         old_entry[:operation] = :remove

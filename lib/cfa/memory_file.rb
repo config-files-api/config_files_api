@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module CFA
   # memory file is used when string is stored only in memory.
   # Useful for testing. For remote read or socket read, own File class

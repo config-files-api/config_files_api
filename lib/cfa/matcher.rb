@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module CFA
   # The Matcher is used as a predicate on {AugeasElement}.
   #
