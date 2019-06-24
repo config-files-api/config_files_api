@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "cfa/augeas_parser/keys_cache"

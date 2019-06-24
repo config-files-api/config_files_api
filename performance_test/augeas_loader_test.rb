@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 # use with `time ruby <path>` to test changes in library
