@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "cfa/matcher"
@@ -6,6 +6,7 @@ require "cfa/placer"
 # FIXME: tree should be generic and not augeas specific,
 # not needed in 1.0 as planned
 require "cfa/augeas_parser"
+require "sorbet-runtime"
 
 module CFA
   # A base class for models. Represents a configuration file as an object
@@ -107,11 +108,12 @@ module CFA
     def self.attributes(attrs)
       attrs.each_pair do |method_name, key|
         define_method(method_name) do
-          tree_value_plain(generic_get(key))
+          self_ = T.cast(self, BaseModel)
+          self_.tree_value_plain(self_.generic_get(key))
         end
 
         define_method(:"#{method_name.to_s}=") do |value|
-          tree_value_change(key, value)
+          T.cast(self, BaseModel).tree_value_change(key, value)
         end
       end
     end
