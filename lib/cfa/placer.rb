@@ -1,5 +1,7 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
+
+require "sorbet-runtime"
 
 module CFA
   # Places a new {AugeasElement} into an {AugeasTree}.
@@ -42,7 +44,7 @@ module CFA
   class BeforePlacer < Placer
     # @param [Matcher] matcher
     def initialize(matcher)
-      @matcher = matcher
+      @matcher = T.let(matcher, Matcher)
     end
 
     # (see Placer#new_element)
@@ -67,7 +69,7 @@ module CFA
   class AfterPlacer < Placer
     # @param [Matcher] matcher
     def initialize(matcher)
-      @matcher = matcher
+      @matcher = T.let(matcher, Matcher)
     end
 
     # (see Placer#new_element)
@@ -93,7 +95,7 @@ module CFA
   class ReplacePlacer < Placer
     # @param [Matcher] matcher
     def initialize(matcher)
-      @matcher = matcher
+      @matcher = T.let(matcher, Matcher)
     end
 
     # (see Placer#new_element)

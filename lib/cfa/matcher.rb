@@ -1,5 +1,7 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
+
+require "sorbet-runtime"
 
 module CFA
   # The Matcher is used as a predicate on {AugeasElement}.
@@ -49,6 +51,7 @@ module CFA
 
         return true
       end
+      @matcher = T.let(@matcher, T.proc.params(e: T.untyped).returns(T::Boolean))
     end
 
     # @return [Proc{AugeasElement=>Boolean}]
