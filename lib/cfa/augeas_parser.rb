@@ -183,8 +183,11 @@ module CFA
     end
 
     def ==(other)
-      [:class, :value, :tree].all? do |a|
-        public_send(a) == other.public_send(a)
+      case other
+      when AugeasTreeValue
+        value == other.value && tree == other.tree
+      else
+        false
       end
     end
 
@@ -300,17 +303,20 @@ module CFA
     end
 
     def ==(other)
-      return false if self.class != other.class
+      case other
+      when AugeasTree
+        other_data = other.data # do not compute again
+        data.each_with_index do |entry, index|
+          other_entry = other_data[index]
+          return false unless other_entry
+          return false if entry[:key] != other_entry[:key]
+          return false if entry[:value] != other_entry[:value]
+        end
 
-      other_data = other.data # do not compute again
-      data.each_with_index do |entry, index|
-        other_entry = other_data[index]
-        return false unless other_entry
-        return false if entry[:key] != other_entry[:key]
-        return false if entry[:value] != other_entry[:value]
+        true
+      else
+        false
       end
-
-      true
     end
 
     # For objects of class Object, eql? is synonymous with ==:
