@@ -313,23 +313,21 @@ module CFA
         new_path = +"/"
         path.split("/").each do |element|
           new_path << "/" unless new_path.end_with?("/")
-          pick_candidate(paths, new_path, element)
+          new_path << pick_candidate(paths, new_path, element)
         end
 
         paths.index(new_path) ||
           raise("Cannot find path #{preceding.path} in #{paths.inspect}")
       end
 
+      # it returns variant of element that exists in path
       def pick_candidate(paths, new_path, element)
         # NOTE: order here is important due to early matching
         candidates = [element + "/", element + "[1]",
                       element.sub(/\[\d+\]/, ""), element]
-        paths.any? do |p|
-          candidates.any? do |c|
-            if p.start_with?(new_path + c)
-              new_path << c
-              true
-            end
+        paths.each do |p|
+          candidates.each do |c|
+            return c if p.start_with?(new_path + c)
           end
         end
       end
