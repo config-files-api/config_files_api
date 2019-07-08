@@ -306,6 +306,11 @@ module CFA
         # e.g. #comment to #comment[1]. Can happen only if it switch from
         # single entry to collection
         preceding_index ||= paths.index(preceding.path + "[1]")
+        # it can also happen that prefix is change from single entry to collection
+        preceding_index ||= paths.index(preceding.prefix + "[1]/" + preceding.path)
+        # and combination
+        # TODO: probably need recursive check for multiple nesting
+        preceding_index ||= paths.index(preceding.prefix + "[1]/" + preceding.key + "[1]")
         paths[preceding_index + 1]
       end
     end
