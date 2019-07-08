@@ -301,17 +301,37 @@ module CFA
       # @param preceding [LocatedEntry]
       def path_after(preceding)
         paths = aug.match(preceding.prefix + "/*")
-        preceding_index = paths.index(preceding.path)
-        # it can happen, that insertion change previous entry from
-        # e.g. #comment to #comment[1]. Can happen only if it switch from
-        # single entry to collection
-        preceding_index ||= paths.index(preceding.path + "[1]")
-        # it can also happen that prefix is change from single entry to collection
-        preceding_index ||= paths.index(preceding.prefix + "[1]/" + preceding.path)
-        # and combination
-        # TODO: probably need recursive check for multiple nesting
-        preceding_index ||= paths.index(preceding.prefix + "[1]/" + preceding.key + "[1]")
-        paths[preceding_index + 1]
+        paths[find_preceding_index(paths, preceding) + 1]
+      end
+
+      def find_preceding_index(paths, preceding)
+        path = preceding.path
+        # common case, just included
+        return paths.index(path) if paths.include?(path)
+
+        # not found, so it means that some collection or single entry switch
+        new_path = +"/"
+        path.split("/").each do |element|
+          new_path << "/" unless new_path.end_with?("/")
+          pick_candidate(paths, new_path, element)
+        end
+
+        paths.index(new_path) ||
+          raise("Cannot find path #{preceding.path} in #{paths.inspect}")
+      end
+
+      def pick_candidate(paths, new_path, element)
+        # NOTE: order here is important due to early matching
+        candidates = [element + "/", element + "[1]",
+                      element.sub(/\[\d+\]/, ""), element]
+        paths.any? do |p|
+          candidates.any? do |c|
+            if p.start_with?(new_path + c)
+              new_path << c
+              true
+            end
+          end
+        end
       end
     end
 

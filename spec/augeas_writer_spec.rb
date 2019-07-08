@@ -417,7 +417,8 @@ EXAMPLE
       expect(parser.serialize(tree)).to eq(expected)
     end
 
-    it "writes properly combination of subtree and single entry that is modified (bsc#1132362)" do
+    it "writes properly combination of subtree and single entry that is " \
+        "modified (bsc#1132362)" do
       input = <<EXAMPLE
 server 1.pool.ntp.org iburst
 EXAMPLE
@@ -432,7 +433,29 @@ EXAMPLE
       tree["server"].tree.delete("iburst")
       tree["server"].tree.add("iburst", nil)
 
-      tree.add("server[]", CFA::AugeasTreeValue.new(CFA::AugeasTree.new, "3.pool.ntp.org"))
+      tree.add("server[]",
+               CFA::AugeasTreeValue.new(CFA::AugeasTree.new, "3.pool.ntp.org"))
+
+      expect(parser.serialize(tree)).to eq(expected)
+    end
+
+    it "writes properly if collection is reduced to single element" do
+      input = <<EXAMPLE
+server 1.pool.ntp.org iburst
+server 3.pool.ntp.org
+EXAMPLE
+
+      expected = <<EXAMPLE
+server 1.pool.ntp.org iburst
+EXAMPLE
+
+      parser = CFA::AugeasParser.new("ntp.lns")
+      tree = parser.parse(input)
+      servers = tree.collection("server")
+      servers[0].tree.delete("iburst")
+      servers[0].tree.add("iburst", nil)
+
+      servers.delete("3.pool.ntp.org")
 
       expect(parser.serialize(tree)).to eq(expected)
     end
