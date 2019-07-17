@@ -301,12 +301,35 @@ module CFA
       # @param preceding [LocatedEntry]
       def path_after(preceding)
         paths = aug.match(preceding.prefix + "/*")
-        preceding_index = paths.index(preceding.path)
-        # it can happen, that insertion change previous entry from
-        # e.g. #comment to #comment[1]. Can happen only if it switch from
-        # single entry to collection
-        preceding_index ||= paths.index(preceding.path + "[1]")
-        paths[preceding_index + 1]
+        paths[find_preceding_index(paths, preceding) + 1]
+      end
+
+      def find_preceding_index(paths, preceding)
+        path = preceding.path
+        # common case, just included
+        return paths.index(path) if paths.include?(path)
+
+        # not found, so it means that some collection or single entry switch
+        new_path = +"/"
+        path.split("/").each do |element|
+          new_path << "/" unless new_path.end_with?("/")
+          new_path << pick_candidate(paths, new_path, element)
+        end
+
+        paths.index(new_path) ||
+          raise("Cannot find path #{preceding.path} in #{paths.inspect}")
+      end
+
+      # it returns variant of element that exists in path
+      def pick_candidate(paths, new_path, element)
+        # NOTE: order here is important due to early matching
+        candidates = [element + "/", element + "[1]",
+                      element.sub(/\[\d+\]/, ""), element]
+        paths.each do |p|
+          candidates.each do |c|
+            return c if p.start_with?(new_path + c)
+          end
+        end
       end
     end
 
