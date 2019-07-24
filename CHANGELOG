@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Jul 24 14:19:36 UTC 2019 - Josef Reidinger <jreidinger@suse.com>
+
+- 0002-use-ruby-2.1-syntax.patch : patch that adapt gem to work on
+  ruby 2.1 used in SLE12SP5 (bsc#1142642)
+
+-------------------------------------------------------------------
 Wed Jul 17 06:25:41 UTC 2019 - Josef Reidinger <jreidinger@suse.com>
 
 - fix writting subtree when element change to collection and vice
