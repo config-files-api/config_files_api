@@ -310,7 +310,7 @@ module CFA
         return paths.index(path) if paths.include?(path)
 
         # not found, so it means that some collection or single entry switch
-        new_path = +"/"
+        new_path = "/".dup
         path.split("/").each do |element|
           new_path << "/" unless new_path.end_with?("/")
           new_path << pick_candidate(paths, new_path, element)

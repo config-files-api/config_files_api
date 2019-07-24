@@ -18,3 +18,26 @@ The third layer consist on a set of models representing the files to provide
 more high level actions. Its main purposes are to ensure consistency of the
 files and to provide high level API for manipulating the files. The models
 live in their own gems as plugins built on top of this gem.
+
+This Maintenance Branch
+----------------------
+
+This branch is specifically created for maintaining version on SLE 12 SP5.
+Specifics:
+
+- rubocop disabled
+- ruby2.1 used
+- gem is not pushed to rubygems.org
+
+How to Release This Branch
+--------------------------
+There is tag SLE12-SP5-base which can be used to generate series of patches on top of gem used in SLE12 SP5.
+Always try to separate commits with changes in lib and without changes in lib, because in IBS patch
+is applied on unpacked gem which contain only lib directory and gemspec. Patches which does not apply
+to gem mark as NOPATCH. So generate patches and remove one not for gem:
+
+```
+git format-patch SLE12-SP5-base..HEAD && rm *NOPATCH*.patch
+```
+
+Copy all patches to IBS repository (Devel:YaST:SLE12-SP5), adapt spec file and copy CHANGELOG to changes file.
