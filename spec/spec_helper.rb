@@ -2,6 +2,8 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
+DATA_PATH = File.expand_path("data", __dir__)
+
 def load_data(path)
   File.read(File.expand_path("data/#{path}", __dir__))
 end

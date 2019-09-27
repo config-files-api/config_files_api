@@ -212,6 +212,14 @@ module CFA
       @data.reject { |e| e[:operation] == :remove }.freeze
     end
 
+    # TODO
+    #
+    # @param _other [AugeasTree]
+    # @return [AugeasTree]
+    def merge(_other)
+      self
+    end
+
     # low level access to all AugeasElement including ones marked for removal
     def all_data
       @data
