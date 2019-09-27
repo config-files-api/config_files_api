@@ -2,6 +2,7 @@
 
 require "cfa/matcher"
 require "cfa/placer"
+require "cfa/loader"
 # FIXME: tree should be generic and not augeas specific,
 # not needed in 1.0 as planned
 require "cfa/augeas_parser"
@@ -22,10 +23,11 @@ module CFA
     #   It has to provide methods `string read(string)` and
     #   `write(string, string)`. For an example see {CFA::MemoryFile}.
     #   If unspecified or `nil`, {.default_file_handler} is asked.
-    def initialize(parser, file_path, file_handler: nil)
+    def initialize(parser, file_path, file_handler: nil, load_handler: CFA::Loader)
       @file_handler = file_handler || BaseModel.default_file_handler
       @parser = parser
       @file_path = file_path
+      @load_handler = load_handler
       @loaded = false
       self.data = parser.empty
     end
@@ -53,8 +55,10 @@ module CFA
     # @raise a *parser* specific error. If the parsed String is malformed, then
     #   depending on the used parser it may raise an error.
     def load
-      @parser.file_name = @file_path if @parser.respond_to?(:file_name=)
-      self.data = @parser.parse(@file_handler.read(@file_path))
+      loader = @load_handler.new(
+        parser: @parser, file_handler: @file_handler, file_path: @file_path
+      )
+      self.data = loader.load
       @loaded = true
     end
 
