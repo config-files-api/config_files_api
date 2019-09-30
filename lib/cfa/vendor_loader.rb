@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -22,8 +24,8 @@ require "cfa/loader"
 module CFA
   # Loader to read and combine information from different files
   #
-  # Given an +/etc/example.conf+, this class loads information from
-  # different places. If +/etc/example.conf+ exists, the information is read from:
+  # Given an +/etc/example.conf+, this class loads information from different
+  # places. If +/etc/example.conf+ exists, the information is read from:
   #
   # * +/etc/example.conf+
   # * +/etc/example.d/*+
@@ -34,13 +36,15 @@ module CFA
   # * +/usr/etc/example.d/*+
   # * +/etc/example.d/*+
   class VendorLoader < Loader
-    VENDOR_PREFIX = "/usr/etc".freeze
+    VENDOR_PREFIX = "/usr/etc"
     CUSTOM_PREFIX = "/etc"
 
     attr_reader :vendor_prefix
     attr_reader :custom_prefix
 
-    def initialize(parser:, file_handler:, file_path:, vendor_prefix: nil, custom_prefix: nil)
+    def initialize(
+      parser:, file_handler:, file_path:, vendor_prefix: nil, custom_prefix: nil
+    )
       super(parser: parser, file_handler: file_handler, file_path: file_path)
       @vendor_prefix = vendor_prefix || VENDOR_PREFIX
       @custom_prefix = custom_prefix || CUSTOM_PREFIX
@@ -63,8 +67,8 @@ module CFA
           [file_path, override_paths(file_path)]
         else
           rel_file_path = file_path.sub(/\A#{custom_prefix}/, "")
-          vendor_file_path = File.join(vendor_prefix, rel_file_path)
-          [vendor_file_path, override_paths(vendor_file_path), override_paths(file_path)]
+          vendor_path = File.join(vendor_prefix, rel_file_path)
+          [vendor_path, override_paths(vendor_path), override_paths(file_path)]
         end
       Dir.glob(globs)
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -20,8 +22,9 @@
 module CFA
   # This class is responsible for loading a file using a parser.
   #
-  # {Loader} can be specialized to support more complex scenarios, like reading configuration
-  # information from different sources. See {VendorLoader} for an example.
+  # {Loader} can be specialized to support more complex scenarios, like reading
+  # configuration information from different sources. See {VendorLoader} for an
+  # example.
   #
   # @example Loading and merging configuration files
   #   loader = Loader.new(

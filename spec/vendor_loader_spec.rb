@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -24,7 +26,8 @@ require "cfa/augeas_parser"
 describe CFA::VendorLoader do
   subject(:loader) do
     CFA::VendorLoader.new(
-      parser: parser, file_handler: File, file_path: file_path, vendor_prefix: vendor_prefix, custom_prefix: custom_prefix
+      parser: parser, file_handler: File, file_path: file_path,
+      vendor_prefix: vendor_prefix, custom_prefix: custom_prefix
     )
   end
   let(:parser) { CFA::AugeasParser.new(lense) }

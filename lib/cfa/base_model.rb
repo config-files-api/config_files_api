@@ -23,7 +23,8 @@ module CFA
     #   It has to provide methods `string read(string)` and
     #   `write(string, string)`. For an example see {CFA::MemoryFile}.
     #   If unspecified or `nil`, {.default_file_handler} is asked.
-    def initialize(parser, file_path, file_handler: nil, load_handler: CFA::Loader)
+    def initialize(parser, file_path, file_handler: nil,
+      load_handler: CFA::Loader)
       @file_handler = file_handler || BaseModel.default_file_handler
       @parser = parser
       @file_path = file_path

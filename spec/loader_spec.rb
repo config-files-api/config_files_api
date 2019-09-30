@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright (c) [2019] SUSE LLC
 #
 # All Rights Reserved.
@@ -22,7 +24,9 @@ require "cfa/loader"
 require "cfa/augeas_parser"
 
 describe CFA::Loader do
-  subject { CFA::Loader.new(parser: parser, file_handler: File, file_path: file_path) }
+  subject do
+    CFA::Loader.new(parser: parser, file_handler: File, file_path: file_path)
+  end
   let(:parser) { CFA::AugeasParser.new("sysconfig.lns") }
   let(:file_path) { "/etc/zypp/zypp.conf" }
 
