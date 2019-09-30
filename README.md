@@ -14,10 +14,9 @@ The second layer is the parser, that understands the structure
 of the configuration files. There are also several possible variants like augeas
 based, XML parsed by standard ruby library or CVS via cvs specialized library.
 
-The third layer are the loaders and writers, which are able to merge the data
-from different files for cases where the configuration is spread accross
-several files. For instance, think about the typical `<example>.d` directories,
-like `pam.d`.
+The third layer are the loaders, which are able to merge the data from different
+files for cases where the configuration is spread accross several files. For
+instance, think about the typical `<example>.d` directories, like `pam.d`.
 
 The fourth layer consist on a set of models representing the configuration to
 provide more high level actions. Its main purposes are to ensure consistency of
