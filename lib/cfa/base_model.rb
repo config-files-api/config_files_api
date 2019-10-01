@@ -23,12 +23,13 @@ module CFA
     #   It has to provide methods `string read(string)` and
     #   `write(string, string)`. For an example see {CFA::MemoryFile}.
     #   If unspecified or `nil`, {.default_file_handler} is asked.
-    def initialize(parser, file_path, file_handler: nil,
-      load_handler: CFA::Loader)
+    def initialize(parser, file_path, file_handler: nil, load_handler: nil)
       @file_handler = file_handler || BaseModel.default_file_handler
       @parser = parser
       @file_path = file_path
-      @load_handler = load_handler
+      @load_handler = load_handler || CFA::Loader.new(
+        parser: @parser, file_handler: @file_handler, file_path: @file_path
+      )
       @loaded = false
       self.data = parser.empty
     end
@@ -56,10 +57,7 @@ module CFA
     # @raise a *parser* specific error. If the parsed String is malformed, then
     #   depending on the used parser it may raise an error.
     def load
-      loader = @load_handler.new(
-        parser: @parser, file_handler: @file_handler, file_path: @file_path
-      )
-      self.data = loader.load
+      self.data = @load_handler.load
       @loaded = true
     end
 

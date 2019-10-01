@@ -48,9 +48,9 @@ module CFA
 
     attr_reader :parser, :file_handler, :file_path
 
-    def load_file(file_path)
-      @parser.file_name = file_path if @parser.respond_to?(:file_name=)
-      @parser.parse(@file_handler.read(file_path))
+    def load_file(path)
+      @parser.file_name = path if @parser.respond_to?(:file_name=)
+      @parser.parse(@file_handler.read(path))
     end
   end
 end
