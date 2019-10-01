@@ -44,8 +44,7 @@ module CFA
     #   A properly written BaseModel subclass should prevent that by preventing
     #   insertion of such values in the first place.
     def save
-      @parser.file_name = @file_path if @parser.respond_to?(:file_name=)
-      @file_handler.write(@file_path, @parser.serialize(data))
+      @load_handler.save(data)
     end
 
     # Reads a String using *file_handler*

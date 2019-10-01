@@ -42,4 +42,16 @@ describe CFA::Loader do
       expect(tree["arch"]).to eq("s390")
     end
   end
+
+  describe "#save" do
+    before do
+      allow(parser).to receive(:serialize).and_return("foo=bar")
+    end
+
+    it "writes the content to the file path" do
+      expect(parser).to receive(:file_name=).with("/etc/zypp/zypp.conf")
+      expect(File).to receive(:write).with("/etc/zypp/zypp.conf", "foo=bar")
+      subject.save({})
+    end
+  end
 end

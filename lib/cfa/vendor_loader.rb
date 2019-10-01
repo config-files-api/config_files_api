@@ -38,6 +38,7 @@ module CFA
   class VendorLoader < Loader
     VENDOR_PREFIX = "/usr/etc"
     CUSTOM_PREFIX = "/etc"
+    FILE_ORDER = 50
 
     attr_reader :vendor_prefix
     attr_reader :custom_prefix
@@ -60,6 +61,13 @@ module CFA
       end
     end
 
+    def save(data)
+      conf_path = File.join(
+        override_dir(file_path), "#{FILE_ORDER}-yast.conf"
+      )
+      save_file(conf_path, data)
+    end
+
     # @return [Array<String>]
     def paths
       globs =
@@ -76,8 +84,12 @@ module CFA
     # @param path [String]
     # @return [Array<String>]
     def override_paths(path)
+      File.join(override_dir(path), "*")
+    end
+
+    def override_dir(path)
       ext = File.extname(path)
-      File.join(path.sub(/#{ext}$/, ".d"), "*")
+      path.sub(/#{ext}$/, ".d")
     end
   end
 end

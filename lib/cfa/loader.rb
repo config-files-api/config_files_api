@@ -44,6 +44,10 @@ module CFA
       load_file(file_path)
     end
 
+    def save(data)
+      save_file(file_path, data)
+    end
+
   private
 
     attr_reader :parser, :file_handler, :file_path
@@ -51,6 +55,11 @@ module CFA
     def load_file(path)
       @parser.file_name = path if @parser.respond_to?(:file_name=)
       @parser.parse(@file_handler.read(path))
+    end
+
+    def save_file(path, data)
+      @parser.file_name = path if @parser.respond_to?(:file_name=)
+      @file_handler.write(path, @parser.serialize(data))
     end
   end
 end

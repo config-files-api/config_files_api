@@ -33,6 +33,7 @@ describe CFA::VendorLoader do
   let(:parser) { CFA::AugeasParser.new(lense) }
   let(:vendor_prefix) { File.join(DATA_PATH, "usr", "etc") }
   let(:custom_prefix) { File.join(DATA_PATH, "etc") }
+  let(:lense) { "sysctl.lns" }
 
   describe "#load" do
     before do
@@ -81,6 +82,22 @@ describe CFA::VendorLoader do
           .with(File.join(custom_prefix, "sysctl.d", "50-yast.conf"))
         loader.load
       end
+    end
+  end
+
+  describe "#save" do
+    let(:file_path) { File.join(custom_prefix, "sysctl.conf") }
+
+    before do
+      allow(parser).to receive(:serialize).and_return("foo=bar")
+    end
+
+    it "writes the content to .d directory" do
+      conf_file = File.join(custom_prefix, "sysctl.d", "50-yast.conf")
+      expect(parser).to receive(:file_name=)
+        .with(conf_file)
+      expect(File).to receive(:write).with(conf_file, "foo=bar")
+      subject.save({})
     end
   end
 end
