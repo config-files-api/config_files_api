@@ -212,14 +212,6 @@ module CFA
       @data.reject { |e| e[:operation] == :remove }.freeze
     end
 
-    # TODO
-    #
-    # @param _other [AugeasTree]
-    # @return [AugeasTree]
-    def merge(_other)
-      self
-    end
-
     # low level access to all AugeasElement including ones marked for removal
     def all_data
       @data
@@ -304,6 +296,34 @@ module CFA
     # @return [Array<AugeasElement>] matching elements
     def select(matcher)
       data.select(&matcher)
+    end
+
+    # Returns a copy of the tree
+    #
+    # @return [AugeasTree]
+    def copy
+      Marshal.load(Marshal.dump(self))
+    end
+
+    # Merges two augeas tree
+    #
+    # Information from both trees is merged, building a new one.
+    #
+    # TODO: The implementation is not finished yet. Support for comments and
+    # arrays are still missing.
+    #
+    # @param other [AugeasTree]
+    # @return [AugeasTree]
+    # @see #[]=
+    def merge(other)
+      other.data.each_with_object(self.copy) do |e, merged|
+        next if e[:key] == "#comment[]"
+        if e[:value].is_a?(AugeasTree) && merged[e[:key]]
+          merged[e[:key]] = merged[e[:key]].merge(e[:value])
+        else
+          merged[e[:key]] = e[:value]
+        end
+      end
     end
 
     def ==(other)

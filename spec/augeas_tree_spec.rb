@@ -151,4 +151,34 @@ describe CFA::AugeasTree do
       expect(example_tree == other_tree).to eq(false)
     end
   end
+
+  describe "#merge" do
+    let(:other) do
+      CFA::AugeasTree.new.tap do |tree|
+        tree.add("#comment", "sample comment")
+        tree.add("debug", "no")
+      end
+    end
+
+    before do
+      tree.add("debug", "yes")
+    end
+
+    it "merges simple values" do
+      merged = tree.merge(other)
+      expect(merged["debug"]).to eq("no")
+    end
+
+    it "merges subtrees"
+
+    it "merges arrays"
+  end
+
+  describe "#copy" do
+    it "returns a copy of the object" do
+      copy = tree.copy
+      expect(copy).to eq(tree)
+      expect(copy).to_not be(tree)
+    end
+  end
 end
