@@ -198,6 +198,7 @@ module CFA
   end
 
   # Represents a parsed Augeas config tree with user friendly methods
+  # rubocop:disable Metrics/ClassLength
   class AugeasTree
     # Low level access to Augeas structure
     #
@@ -316,13 +317,14 @@ module CFA
     # @return [AugeasTree]
     # @see #[]=
     def merge(other)
-      other.data.each_with_object(self.copy) do |e, merged|
+      other.data.each_with_object(copy) do |e, merged|
         next if e[:key] == "#comment[]"
-        if e[:value].is_a?(AugeasTree) && merged[e[:key]]
-          merged[e[:key]] = merged[e[:key]].merge(e[:value])
-        else
-          merged[e[:key]] = e[:value]
-        end
+
+        merged[e[:key]] = if e[:value].is_a?(AugeasTree) && merged[e[:key]]
+                            merged[e[:key]].merge(e[:value])
+                          else
+                            e[:value]
+                          end
       end
     end
 
@@ -387,6 +389,7 @@ module CFA
       new_entry
     end
   end
+  # rubocop:enable Metrics/ClassLength
 
   # @example read, print, modify and serialize again
   #    require "cfa/augeas_parser"

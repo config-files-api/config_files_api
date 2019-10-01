@@ -111,7 +111,7 @@ module CFA
           tree_value_plain(generic_get(key))
         end
 
-        define_method(:"#{method_name.to_s}=") do |value|
+        define_method(:"#{method_name}=") do |value|
           tree_value_change(key, value)
         end
       end
