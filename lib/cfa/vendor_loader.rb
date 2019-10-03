@@ -62,9 +62,15 @@ module CFA
     end
 
     def save(data)
-      conf_path = File.join(
-        override_dir(file_path), "#{FILE_ORDER}-yast.conf"
-      )
+      conf_path =
+        if File.exist?(override_dir(file_path))
+          file_path
+        else
+          # FIXME: allow to specify a pattern to build the override name
+          File.join(
+            override_dir(file_path), "#{FILE_ORDER}-yast.conf"
+          )
+        end
       save_file(conf_path, data)
     end
 

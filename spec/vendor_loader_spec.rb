@@ -22,6 +22,7 @@
 require_relative "spec_helper"
 require "cfa/vendor_loader"
 require "cfa/augeas_parser"
+require "tmpdir"
 
 describe CFA::VendorLoader do
   subject(:loader) do
@@ -31,9 +32,20 @@ describe CFA::VendorLoader do
     )
   end
   let(:parser) { CFA::AugeasParser.new(lense) }
-  let(:vendor_prefix) { File.join(DATA_PATH, "usr", "etc") }
-  let(:custom_prefix) { File.join(DATA_PATH, "etc") }
+  let(:vendor_prefix) { File.join(tmpdir, "usr", "etc") }
+  let(:custom_prefix) { File.join(tmpdir, "etc") }
   let(:lense) { "sysctl.lns" }
+  let(:tmpdir) { Dir.mktmpdir }
+
+  around do |example|
+    begin
+      FileUtils.cp_r(DATA_PATH, tmpdir)
+      example.run
+    ensure
+      FileUtils.remove_entry(tmpdir)
+    end
+  end
+
 
   describe "#load" do
     before do
@@ -98,6 +110,10 @@ describe CFA::VendorLoader do
         .with(conf_file)
       expect(File).to receive(:write).with(conf_file, "foo=bar")
       subject.save({})
+    end
+
+    context "when the .d directory does not exist" do
+      it "writes the content to the custom configuration file"
     end
   end
 end
