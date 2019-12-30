@@ -17,7 +17,7 @@ Layout/MultilineOperationIndentation:
   EnforcedStyle: indented
 
 # disable heredoc style until we support ruby 2.3 only
-Layout/IndentHeredoc:
+Layout/HeredocIndentation:
   Enabled: false
 
 # https://github.com/SUSE/style-guides/blob/master/Ruby.md#arrays
@@ -34,12 +34,12 @@ Style/SymbolArray:
 # and also colons:
 # foo:     true
 # foo_bar: false
-Layout/AlignHash:
+Layout/HashAlignment:
   EnforcedHashRocketStyle: table
   EnforcedColonStyle: table
 
 # no extra indentation for multiline function calls
-Layout/AlignParameters:
+Layout/ParameterAlignment:
   EnforcedStyle: with_fixed_indentation
 
 # no extra indentation for case

@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = "cfa"
-  s.version     = "1.0.1"
+  s.version     = "1.0.2"
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Josef Reidinger"]
   s.email       = ["jreidinger@suse.cz"]
