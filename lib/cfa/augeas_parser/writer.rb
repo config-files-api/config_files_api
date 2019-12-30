@@ -298,9 +298,9 @@ module CFA
         # element and now it is multiple ones, so try to first element as add
         # is done in reverse order
         if res == -1
-          # TODO: what about deep nesting of trees where upper level change from single
-          # to collection?
-          res = aug.insert(preceding.path+"[1]", located_entry.key, false)
+          # TODO: what about deep nesting of trees where upper level change
+          # from single to collection?
+          aug.insert(preceding.path + "[1]", located_entry.key, false)
         end
         path_after(preceding)
       end
