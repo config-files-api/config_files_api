@@ -293,7 +293,15 @@ module CFA
       # @param located_entry [LocatedEntry] entry to insert
       # @return [String] where value should be written.
       def insert_after(preceding, located_entry)
-        aug.insert(preceding.path, located_entry.key, false)
+        res = aug.insert(preceding.path, located_entry.key, false)
+        # if insert failed it means, that previous preceding entry was single
+        # element and now it is multiple ones, so try to first element as add
+        # is done in reverse order
+        if res == -1
+          # TODO: what about deep nesting of trees where upper level change from single
+          # to collection?
+          res = aug.insert(preceding.path+"[1]", located_entry.key, false)
+        end
         path_after(preceding)
       end
 
